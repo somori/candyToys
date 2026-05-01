@@ -524,7 +524,7 @@ import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstati
 // ============================================================
 // 🔧 設定：あとでここを書き換えてください
 // ============================================================
-const ADMIN_PASSWORD = "Hello!2015!"; // ← ここをあなたのパスワードに変更
+const ADMIN_PASSWORD = "YOUR_PASSWORD"; // ← ここをあなたのパスワードに変更
 
 const firebaseConfig = {
   apiKey: "AIzaSyDZLsBsHzv_CzWloLdiUahoFdny324DOME",
@@ -570,17 +570,31 @@ onValue(itemsRef, snap => {
 // ── Genre toggle ──
 window.toggleGenre = g => {
   if (g === 'all') {
-    activeGenres = activeGenres.size === 3 ? new Set() : new Set(['shokugan','gacha','figure']);
+    activeGenres = new Set(['shokugan','gacha','figure']);
   } else {
-    if (activeGenres.has(g)) activeGenres.delete(g); else activeGenres.add(g);
+    // すでにそれ1つだけ選択中なら全部に戻す
+    if (activeGenres.size === 1 && activeGenres.has(g)) {
+      activeGenres = new Set(['shokugan','gacha','figure']);
+    } else {
+      activeGenres = new Set([g]);
+    }
   }
   updatePills(); render();
 };
 function updatePills() {
   document.querySelectorAll('[data-g]').forEach(p => {
     const g = p.dataset.g;
-    const on = g === 'all' ? activeGenres.size === 3 : activeGenres.has(g);
-    p.classList.toggle('off', !on);
+    const on = g === 'all' ? activeGenres.size === 3 : (activeGenres.size === 1 && activeGenres.has(g));
+    p.classList.toggle('off', !on && !(g === 'all' && activeGenres.size === 3));
+  });
+  // すべてボタンは全選択時だけon、個別は該当のみon
+  document.querySelectorAll('[data-g]').forEach(p => {
+    const g = p.dataset.g;
+    if (g === 'all') {
+      p.classList.toggle('off', activeGenres.size !== 3);
+    } else {
+      p.classList.toggle('off', !(activeGenres.size === 1 && activeGenres.has(g)));
+    }
   });
 }
 
