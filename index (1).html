@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食玩・ガチャ 発売カレンダー</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #fafaf8;
+  --bg2: #f3f2ee;
+  --bg3: #ebebе6;
+  --text: #1a1a18;
+  --text2: #6b6b67;
+  --text3: #a0a09a;
+  --border: rgba(0,0,0,0.1);
+  --border2: rgba(0,0,0,0.18);
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #18181a;
+    --bg2: #232325;
+    --bg3: #2c2c2f;
+    --text: #f0f0ec;
+    --text2: #9a9a96;
+    --text3: #5c5c5a;
+    --border: rgba(255,255,255,0.1);
+    --border2: rgba(255,255,255,0.18);
+    --shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+}
+
+body {
+  font-family: -apple-system, 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 3rem;
+}
+
+.app { max-width: 860px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+/* Header */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.5rem; gap: 12px; flex-wrap: wrap;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, #FAC775 0%, #9FE1CB 50%, #B5D4F4 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.logo h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+
+/* Buttons */
+.btn { padding: 7px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border2); background: var(--bg); color: var(--text); transition: background 0.12s; }
+.btn:hover { background: var(--bg2); }
+.btn-primary { background: var(--text); color: var(--bg); border-color: transparent; }
+.btn-primary:hover { opacity: 0.85; background: var(--text); }
+
+/* View toggle */
+.view-toggle { display: flex; border: 1px solid var(--border2); border-radius: var(--radius); overflow: hidden; }
+.view-btn { background: none; border: none; padding: 6px 12px; cursor: pointer; font-size: 12px; color: var(--text2); transition: background 0.12s; }
+.view-btn.active { background: var(--bg2); color: var(--text); font-weight: 500; }
+
+/* Genre filters */
+.genre-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.genre-pill {
+  padding: 5px 13px; border-radius: 99px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: 1.5px solid transparent; transition: opacity 0.15s, transform 0.1s;
+  user-select: none;
+}
+.genre-pill:active { transform: scale(0.96); }
+.genre-pill.inactive { opacity: 0.35; }
+.pill-all   { background: var(--bg2); color: var(--text2); border-color: var(--border2); }
+.pill-shokugan { background: #FAC775; color: #5a3500; border-color: #d4933a; }
+.pill-gacha    { background: #9FE1CB; color: #064530; border-color: #2aaa7a; }
+.pill-figure   { background: #B5D4F4; color: #0a3d72; border-color: #4a9ae0; }
+
+/* Nav */
+.nav-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+.nav-btn { background: none; border: 1px solid var(--border2); border-radius: var(--radius); padding: 6px 14px; cursor: pointer; font-size: 15px; color: var(--text); transition: background 0.12s; }
+.nav-btn:hover { background: var(--bg2); }
+.month-label { font-size: 17px; font-weight: 600; flex: 1; text-align: center; letter-spacing: -0.3px; }
+
+/* Calendar */
+.cal-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg2); box-shadow: var(--shadow); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); }
+.cal-header { background: var(--bg2); padding: 8px 4px; text-align: center; font-size: 11px; color: var(--text2); font-weight: 600; letter-spacing: 0.5px; }
+.cal-day { background: var(--bg); min-height: 82px; padding: 5px; cursor: default; }
+.cal-day.other-month { background: var(--bg2); }
+.cal-day.has-item { cursor: pointer; }
+.cal-day.has-item:hover { background: var(--bg2); }
+.day-num-wrap { display: flex; justify-content: flex-end; margin-bottom: 3px; }
+.day-num { font-size: 11px; color: var(--text3); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 500; }
+.cal-day.today .day-num { background: #378ADD; color: white; font-weight: 700; }
+.cal-day.other-month .day-num { color: var(--text3); opacity: 0.5; }
+.event-chip {
+  font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-bottom: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;
+  line-height: 1.4;
+}
+.chip-shokugan { background: #FAC775; color: #5a3500; }
+.chip-gacha    { background: #9FE1CB; color: #064530; }
+.chip-figure   { background: #B5D4F4; color: #0a3d72; }
+.chip-more { font-size: 10px; color: var(--text3); padding-left: 3px; }
+
+/* List view */
+.list-view { display: none; flex-direction: column; gap: 6px; }
+.list-view.visible { display: flex; }
+.list-empty { text-align: center; padding: 3rem; color: var(--text3); font-size: 14px; }
+.list-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 10px 14px; box-shadow: var(--shadow);
+}
+.list-date { font-size: 12px; color: var(--text2); min-width: 52px; font-weight: 500; }
+.list-name { flex: 1; font-size: 14px; }
+.list-note { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.list-badge { font-size: 11px; padding: 3px 9px; border-radius: 99px; font-weight: 600; white-space: nowrap; }
+.badge-shokugan { background: #FAC775; color: #5a3500; }
+.badge-gacha    { background: #9FE1CB; color: #064530; }
+.badge-figure   { background: #B5D4F4; color: #0a3d72; }
+.list-edit { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 13px; padding: 3px 7px; border-radius: 6px; }
+.list-edit:hover { background: var(--bg2); color: var(--text); }
+.list-del { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 13px; padding: 3px 7px; border-radius: 6px; }
+.list-del:hover { background: #FCEBEB; color: #A32D2D; }
+
+/* Modal */
+.modal-bg {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  z-index: 200; align-items: center; justify-content: center; padding: 1rem;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--bg); border-radius: var(--radius-lg); border: 1px solid var(--border2);
+  padding: 1.5rem; width: min(440px, 100%); box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  animation: slideUp 0.18s ease;
+}
+@keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal h2 { font-size: 16px; font-weight: 600; margin-bottom: 1.1rem; }
+.form-group { margin-bottom: 12px; }
+.form-group label { font-size: 12px; color: var(--text2); font-weight: 500; display: block; margin-bottom: 5px; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 8px 11px; border: 1px solid var(--border2); border-radius: var(--radius);
+  font-size: 14px; background: var(--bg); color: var(--text); font-family: inherit;
+  transition: border-color 0.12s;
+}
+.form-group input:focus, .form-group select:focus { outline: none; border-color: #378ADD; }
+.genre-select-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+.genre-opt { padding: 7px; border-radius: var(--radius); border: 1.5px solid var(--border2); cursor: pointer; text-align: center; font-size: 12px; font-weight: 600; transition: all 0.12s; opacity: 0.5; }
+.genre-opt.selected { opacity: 1; }
+.genre-opt.go-shokugan { background: #FAC775; color: #5a3500; border-color: #d4933a; }
+.genre-opt.go-gacha    { background: #9FE1CB; color: #064530; border-color: #2aaa7a; }
+.genre-opt.go-figure   { background: #B5D4F4; color: #0a3d72; border-color: #4a9ae0; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+
+/* AI area */
+.ai-section { margin-top: 1.5rem; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem; }
+.ai-section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.ai-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; background: #378ADD; color: white; letter-spacing: 0.5px; }
+.ai-section h3 { font-size: 13px; font-weight: 600; }
+.ai-row { display: flex; gap: 7px; }
+.ai-row input { flex: 1; padding: 8px 11px; border: 1px solid var(--border2); border-radius: var(--radius); font-size: 13px; background: var(--bg); color: var(--text); font-family: inherit; }
+.ai-row input:focus { outline: none; border-color: #378ADD; }
+.ai-results { margin-top: 10px; }
+.ai-result-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+  margin-bottom: 6px;
+}
+.ai-result-item:last-child { margin-bottom: 0; }
+.ai-item-info { flex: 1; }
+.ai-item-name { font-size: 13px; font-weight: 500; }
+.ai-item-meta { font-size: 11px; color: var(--text2); margin-top: 1px; }
+.ai-add-btn { padding: 4px 11px; border-radius: 6px; border: 1px solid var(--border2); background: none; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; transition: background 0.12s; }
+.ai-add-btn:hover { background: var(--bg2); }
+.ai-add-btn.added { background: #EAF3DE; color: #3B6D11; border-color: #97C459; }
+.ai-status { font-size: 12px; color: var(--text2); padding: 6px 0; }
+.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border2); border-top-color: #378ADD; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Stats bar */
+.stats-bar { display: flex; gap: 12px; margin-bottom: 1rem; flex-wrap: wrap; }
+.stat-chip { font-size: 12px; padding: 4px 10px; border-radius: 99px; background: var(--bg2); color: var(--text2); border: 1px solid var(--border); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🎲</div>
+      <h1>食玩・ガチャ 発売カレンダー</h1>
+    </div>
+    <div class="header-actions">
+      <div class="view-toggle">
+        <button class="view-btn active" id="calViewBtn" onclick="setView('cal')">📅 カレンダー</button>
+        <button class="view-btn" id="listViewBtn" onclick="setView('list')">📋 一覧</button>
+      </div>
+      <button class="btn btn-primary" onclick="openAddModal()">＋ 追加</button>
+    </div>
+  </div>
+
+  <div class="genre-filters" id="genreFilters">
+    <span class="genre-pill pill-all active" data-genre="all" onclick="toggleGenre('all')">すべて</span>
+    <span class="genre-pill pill-shokugan active" data-genre="shokugan" onclick="toggleGenre('shokugan')">🍬 食玩</span>
+    <span class="genre-pill pill-gacha active" data-genre="gacha" onclick="toggleGenre('gacha')">🎰 ガチャガチャ</span>
+    <span class="genre-pill pill-figure active" data-genre="figure" onclick="toggleGenre('figure')">🗿 フィギュア</span>
+  </div>
+
+  <div class="stats-bar" id="statsBar"></div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="prevMonth()">‹</button>
+    <div class="month-label" id="monthLabel"></div>
+    <button class="nav-btn" onclick="nextMonth()">›</button>
+  </div>
+
+  <div id="calView">
+    <div class="cal-wrap">
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <div class="list-view" id="listView"></div>
+
+  <!-- AI Search -->
+  <div class="ai-section">
+    <div class="ai-section-header">
+      <span class="ai-badge">AI</span>
+      <h3>発売情報を検索して追加</h3>
+    </div>
+    <div class="ai-row">
+      <input type="text" id="aiInput" placeholder="例：バンダイ 食玩 2025年夏、ポケモン ガチャ など" onkeydown="if(event.key==='Enter')aiSearch()" />
+      <button class="btn btn-primary" onclick="aiSearch()">検索</button>
+    </div>
+    <div class="ai-results" id="aiResults"></div>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg" onclick="bgClick(event)">
+  <div class="modal">
+    <h2 id="modalTitle">アイテムを追加</h2>
+    <div class="form-group">
+      <label>商品名 *</label>
+      <input type="text" id="fName" placeholder="例：ワンピース DXF Vol.5" />
+    </div>
+    <div class="form-group">
+      <label>発売日 *</label>
+      <input type="date" id="fDate" />
+    </div>
+    <div class="form-group">
+      <label>ジャンル *</label>
+      <div class="genre-select-grid">
+        <div class="genre-opt go-shokugan selected" data-g="shokugan" onclick="selectGenre('shokugan')">🍬 食玩</div>
+        <div class="genre-opt go-gacha" data-g="gacha" onclick="selectGenre('gacha')">🎰 ガチャ</div>
+        <div class="genre-opt go-figure" data-g="figure" onclick="selectGenre('figure')">🗿 フィギュア</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>メモ（任意）</label>
+      <input type="text" id="fNote" placeholder="例：全6種、バンダイ、600円" />
+    </div>
+    <div class="form-group">
+      <label>URL（任意）</label>
+      <input type="text" id="fUrl" placeholder="例：商品ページのURL" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveItem()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'gacha_cal_v2';
+let items = [];
+let year = new Date().getFullYear();
+let month = new Date().getMonth();
+let activeGenres = new Set(['shokugan','gacha','figure']);
+let currentView = 'cal';
+let editId = null;
+let selectedGenre = 'shokugan';
+
+const genreLabel = { shokugan:'食玩', gacha:'ガチャ', figure:'フィギュア' };
+const chipClass   = { shokugan:'chip-shokugan', gacha:'chip-gacha', figure:'chip-figure' };
+const badgeClass  = { shokugan:'badge-shokugan', gacha:'badge-gacha', figure:'badge-figure' };
+
+function load() {
+  try { items = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch(e) { items = []; }
+  if (!items.length) items = defaultItems();
+}
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch(e) {} }
+function genId() { return Date.now() + Math.random(); }
+
+function defaultItems() {
+  const y = new Date().getFullYear();
+  const m = String(new Date().getMonth()+1).padStart(2,'0');
+  return [
+    {id:1, name:'ワンピース DXFサンプル', date:`${y}-${m}-10`, genre:'figure', note:'バンダイ', url:''},
+    {id:2, name:'鬼滅の刃 食玩サンプル', date:`${y}-${m}-15`, genre:'shokugan', note:'全5種', url:''},
+    {id:3, name:'ポケモン ガチャサンプル', date:`${y}-${m}-20`, genre:'gacha', note:'200円', url:''},
+  ];
+}
+
+function toggleGenre(g) {
+  if (g === 'all') {
+    activeGenres = activeGenres.size===3 ? new Set() : new Set(['shokugan','gacha','figure']);
+  } else {
+    if (activeGenres.has(g)) activeGenres.delete(g); else activeGenres.add(g);
+  }
+  updatePills(); render();
+}
+function updatePills() {
+  document.querySelectorAll('[data-genre]').forEach(p => {
+    const g = p.dataset.genre;
+    const on = g==='all' ? activeGenres.size===3 : activeGenres.has(g);
+    p.classList.toggle('active', on);
+    p.classList.toggle('inactive', !on);
+  });
+}
+
+function filtered() { return items.filter(i => activeGenres.has(i.genre)); }
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('calView').style.display = v==='cal' ? '' : 'none';
+  document.getElementById('listView').classList.toggle('visible', v==='list');
+  document.getElementById('calViewBtn').classList.toggle('active', v==='cal');
+  document.getElementById('listViewBtn').classList.toggle('active', v==='list');
+  render();
+}
+
+function prevMonth() { if(--month<0){month=11;year--;} render(); }
+function nextMonth() { if(++month>11){month=0;year++;} render(); }
+
+function render() {
+  const mNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  document.getElementById('monthLabel').textContent = `${year}年 ${mNames[month]}`;
+  renderStats();
+  if (currentView==='cal') renderCal(); else renderList();
+}
+
+function renderStats() {
+  const thisMonth = filtered().filter(i => {
+    const d = new Date(i.date+'T00:00:00');
+    return d.getFullYear()===year && d.getMonth()===month;
+  });
+  const counts = {shokugan:0,gacha:0,figure:0};
+  thisMonth.forEach(i => counts[i.genre]++);
+  document.getElementById('statsBar').innerHTML =
+    `<span class="stat-chip">この月 ${thisMonth.length}件</span>` +
+    (counts.shokugan ? `<span class="stat-chip">🍬 食玩 ${counts.shokugan}</span>` : '') +
+    (counts.gacha    ? `<span class="stat-chip">🎰 ガチャ ${counts.gacha}</span>` : '') +
+    (counts.figure   ? `<span class="stat-chip">🗿 フィギュア ${counts.figure}</span>` : '');
+}
+
+function renderCal() {
+  const days = ['日','月','火','水','木','金','土'];
+  const first = new Date(year, month, 1).getDay();
+  const last  = new Date(year, month+1, 0).getDate();
+  const today = new Date();
+  const byDate = {};
+  filtered().forEach(i => { (byDate[i.date]=byDate[i.date]||[]).push(i); });
+
+  let html = days.map(d=>`<div class="cal-header">${d}</div>`).join('');
+  for (let i=0;i<first;i++) {
+    const d = new Date(year,month,-first+i+1).getDate();
+    html += `<div class="cal-day other-month"><div class="day-num-wrap"><span class="day-num">${d}</span></div></div>`;
+  }
+  for (let d=1;d<=last;d++) {
+    const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = today.getFullYear()===year && today.getMonth()===month && today.getDate()===d;
+    const dayItems = byDate[ds]||[];
+    html += `<div class="cal-day ${isToday?'today':''} ${dayItems.length?'has-item':''}" onclick="dayClick('${ds}')">`;
+    html += `<div class="day-num-wrap"><span class="day-num">${d}</span></div>`;
+    dayItems.slice(0,3).forEach(it => {
+      html += `<div class="event-chip ${chipClass[it.genre]}" title="${it.name}">${it.name}</div>`;
+    });
+    if (dayItems.length>3) html += `<div class="chip-more">+${dayItems.length-3}件</div>`;
+    html += '</div>';
+  }
+  const rem = (first+last)%7;
+  if (rem>0) for(let i=1;i<=7-rem;i++) html += `<div class="cal-day other-month"><div class="day-num-wrap"><span class="day-num">${i}</span></div></div>`;
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function renderList() {
+  const lv = document.getElementById('listView');
+  const fi = filtered().filter(i => {
+    const d = new Date(i.date+'T00:00:00');
+    return d.getFullYear()===year && d.getMonth()===month;
+  }).sort((a,b)=>a.date.localeCompare(b.date));
+  if (!fi.length) { lv.innerHTML='<div class="list-empty">この月の登録アイテムはありません</div>'; return; }
+  lv.innerHTML = fi.map(it => {
+    const d = new Date(it.date+'T00:00:00');
+    return `<div class="list-item">
+      <span class="list-date">${d.getMonth()+1}/${d.getDate()}</span>
+      <div class="list-name">
+        ${it.url ? `<a href="${it.url}" target="_blank" style="color:inherit;text-decoration:none">${it.name}</a>` : it.name}
+        ${it.note ? `<div class="list-note">${it.note}</div>` : ''}
+      </div>
+      <span class="list-badge ${badgeClass[it.genre]}">${genreLabel[it.genre]}</span>
+      <button class="list-edit" onclick="openEditModal(${it.id})" title="編集">✏️</button>
+      <button class="list-del"  onclick="deleteItem(${it.id})"   title="削除">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function dayClick(ds) { openAddModal(ds); }
+
+function openAddModal(prefillDate) {
+  editId = null;
+  document.getElementById('modalTitle').textContent = 'アイテムを追加';
+  document.getElementById('fName').value = '';
+  document.getElementById('fDate').value = prefillDate||'';
+  document.getElementById('fNote').value = '';
+  document.getElementById('fUrl').value = '';
+  selectGenre('shokugan');
+  document.getElementById('modalBg').classList.add('open');
+  setTimeout(()=>document.getElementById('fName').focus(),100);
+}
+
+function openEditModal(id) {
+  const it = items.find(i=>i.id===id); if(!it) return;
+  editId = id;
+  document.getElementById('modalTitle').textContent = 'アイテムを編集';
+  document.getElementById('fName').value = it.name;
+  document.getElementById('fDate').value = it.date;
+  document.getElementById('fNote').value = it.note||'';
+  document.getElementById('fUrl').value  = it.url||'';
+  selectGenre(it.genre);
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+function bgClick(e) { if(e.target===document.getElementById('modalBg')) closeModal(); }
+
+function selectGenre(g) {
+  selectedGenre = g;
+  document.querySelectorAll('.genre-opt').forEach(el => {
+    el.classList.toggle('selected', el.dataset.g===g);
+  });
+}
+
+function saveItem() {
+  const name = document.getElementById('fName').value.trim();
+  const date = document.getElementById('fDate').value;
+  const note = document.getElementById('fNote').value.trim();
+  const url  = document.getElementById('fUrl').value.trim();
+  if (!name||!date) { alert('商品名と発売日は必須です'); return; }
+  if (editId) {
+    const idx = items.findIndex(i=>i.id===editId);
+    if (idx>=0) items[idx] = {...items[idx], name, date, genre:selectedGenre, note, url};
+  } else {
+    items.push({id:genId(), name, date, genre:selectedGenre, note, url});
+  }
+  save(); closeModal();
+  const d = new Date(date+'T00:00:00');
+  year=d.getFullYear(); month=d.getMonth();
+  render();
+}
+
+function deleteItem(id) {
+  if (!confirm('このアイテムを削除しますか？')) return;
+  items = items.filter(i=>i.id!==id); save(); render();
+}
+
+// AI Search
+async function aiSearch() {
+  const q = document.getElementById('aiInput').value.trim();
+  if (!q) return;
+  const el = document.getElementById('aiResults');
+  el.innerHTML = '<div class="ai-status"><span class="spinner"></span>検索中...</div>';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        system: `あなたは食玩・ガチャガチャ・フィギュアの発売情報専門アシスタントです。
+ユーザーのクエリで発売予定商品をWeb検索し、以下のJSON形式のみを返してください。前置き・説明文は不要です：
+{"items":[{"name":"商品名","date":"YYYY-MM-DD","genre":"shokugan|gacha|figure","note":"メーカーや種類など短いメモ","url":"公式や販売ページURL（あれば）"}]}
+ルール：genreはshokugan/gacha/figureのいずれか。発売日が月しかわからない場合はその月の1日。不明な場合は今月末。最大6件。`,
+        messages: [{role:'user', content:`発売情報を調べて: ${q}`}]
+      })
+    });
+    const data = await res.json();
+    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('no json');
+    const found = JSON.parse(match[0]).items||[];
+    if (!found.length) { el.innerHTML='<div class="ai-status">該当する情報が見つかりませんでした。別のキーワードを試してみてください。</div>'; return; }
+    window._aiItems = found;
+    el.innerHTML = `<div class="ai-status">${found.length}件見つかりました</div>` +
+      found.map((it,i) => `<div class="ai-result-item">
+        <div class="ai-item-info">
+          <div class="ai-item-name">${it.name}</div>
+          <div class="ai-item-meta">${genreLabel[it.genre]||it.genre} · ${it.date||'日付不明'}${it.note?'・'+it.note:''}</div>
+        </div>
+        <button class="ai-add-btn" id="aibtn${i}" onclick="addAiItem(${i})">＋ 追加</button>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="ai-status">検索に失敗しました。手動で追加してみてください。</div>';
+  }
+}
+
+function addAiItem(i) {
+  const it = window._aiItems[i]; if(!it) return;
+  items.push({id:genId(), name:it.name, date:it.date||new Date().toISOString().slice(0,10), genre:it.genre||'figure', note:it.note||'', url:it.url||''});
+  save();
+  const btn = document.getElementById('aibtn'+i);
+  if(btn){btn.textContent='✓ 追加済';btn.classList.add('added');btn.disabled=true;}
+  const d = new Date((it.date||new Date().toISOString().slice(0,10))+'T00:00:00');
+  year=d.getFullYear(); month=d.getMonth();
+  render();
+}
+
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+load();
+render();
+</script>
+</body>
+</html>
