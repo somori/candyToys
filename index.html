@@ -321,6 +321,24 @@ body {
 }
 .loading-overlay .spinner { width: 28px; height: 28px; border-width: 3px; }
 .loading-overlay p { font-size: 14px; color: var(--text2); }
+
+/* Detail modal */
+.detail-modal {
+  background: var(--surface); border-radius: var(--radius-xl);
+  border: 1px solid var(--border2); width: min(420px, 100%);
+  box-shadow: var(--shadow-lg); animation: slideUp 0.2s ease; overflow: hidden;
+}
+.detail-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: var(--bg2); display: block; }
+.detail-img-ph { width: 100%; aspect-ratio: 16/9; background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 64px; }
+.detail-body { padding: 1.25rem 1.5rem 1.5rem; }
+.detail-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; line-height: 1.4; }
+.detail-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; align-items: center; }
+.detail-date { font-size: 13px; color: var(--text2); font-weight: 500; }
+.detail-note { font-size: 13px; color: var(--text2); }
+.detail-acts { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; }
+
+/* Cal thumbnail chip */
+.chip-thumb-img { width: 14px; height: 14px; border-radius: 2px; object-fit: cover; flex-shrink: 0; vertical-align: middle; margin-right: 2px; }
 </style>
 </head>
 <body>
@@ -424,6 +442,22 @@ body {
     <div class="modal-acts">
       <button class="btn" onclick="closeModal('itemModal')">キャンセル</button>
       <button class="btn btn-accent" onclick="saveItem()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-bg" id="detailModal" onclick="bgClick(event,'detailModal')">
+  <div class="detail-modal">
+    <div id="detailImgWrap"></div>
+    <div class="detail-body">
+      <div class="detail-name" id="detailName"></div>
+      <div class="detail-meta">
+        <span class="list-badge" id="detailBadge"></span>
+        <span class="detail-date" id="detailDate"></span>
+        <span class="detail-note" id="detailNote"></span>
+      </div>
+      <div class="detail-acts" id="detailActs"></div>
     </div>
   </div>
 </div>
@@ -559,7 +593,7 @@ function renderCal() {
   const last  = new Date(year,month+1,0).getDate();
   const today = new Date();
   const byDate = {};
-  thisMonth().forEach(([,v])=>{ (byDate[v.date]=byDate[v.date]||[]).push(v); });
+  thisMonth().forEach(([k,v])=>{ (byDate[v.date]=byDate[v.date]||[]).push([k,v]); });
 
   let h = dayLabels.map((d,i)=>`<div class="cal-head">${d}</div>`).join('');
   for(let i=0;i<first;i++){
@@ -572,14 +606,13 @@ function renderCal() {
     const dow=(new Date(year,month,d).getDay());
     const dowCls=dow===0?'sun':dow===6?'sat':'';
     const dayItems=byDate[ds]||[];
-    const clickable=isAdmin?'clickable':'';
-    h+=`<div class="cal-day ${isToday?'today':''} ${dowCls} ${dayItems.length||isAdmin?'clickable':''}" onclick="${isAdmin?`openAdd('${ds}')`:''}" >`;
+    h+=`<div class="cal-day ${isToday?'today':''} ${dowCls} ${dayItems.length||isAdmin?'clickable':''}" onclick="${isAdmin&&!dayItems.length?`openAdd('${ds}')`:''}" >`;
     h+=`<div class="dnum-wrap"><span class="dnum">${d}</span></div>`;
-    dayItems.slice(0,3).forEach(v=>{
-      const name=v.url?`<a href="${v.url}" target="_blank" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">${v.name}</a>`:v.name;
-      h+=`<span class="chip ${GC[v.genre]}" title="${v.name}">${name}</span>`;
+    dayItems.slice(0,3).forEach(([k,v])=>{
+      const thumb = v.img ? `<img src="${v.img}" class="chip-thumb-img" onerror="this.style.display='none'" />` : '';
+      h+=`<span class="chip ${GC[v.genre]}" onclick="event.stopPropagation();openDetail('${k}')" title="${v.name}">${thumb}${v.name}</span>`;
     });
-    if(dayItems.length>3) h+=`<span class="chip-more">+${dayItems.length-3}件</span>`;
+    if(dayItems.length>3) h+=`<span class="chip-more" onclick="event.stopPropagation();openDetail('${dayItems[0][0]}')" >+${dayItems.length-3}件</span>`;
     h+='</div>';
   }
   const rem=(first+last)%7;
@@ -597,16 +630,12 @@ function renderCard() {
   if(!tm.length){ document.getElementById('cardGrid').innerHTML='<div class="empty" style="grid-column:1/-1">この月の登録アイテムはありません</div>'; return; }
   document.getElementById('cardGrid').innerHTML = tm.map(([k,v])=>{
     const d=new Date(v.date+'T00:00:00');
-    return `<div class="item-card">
+    return `<div class="item-card" onclick="openDetail('${k}')" style="cursor:pointer">
       ${imgTag(v,'card-img','card-img-placeholder')}
       <div class="card-body">
-        <div class="card-name">${v.url?`<a href="${v.url}" target="_blank" style="color:inherit">${v.name}</a>`:v.name}</div>
+        <div class="card-name">${v.name}</div>
         <div class="card-date">${d.getMonth()+1}月${d.getDate()}日${v.note?` · ${v.note}`:''}</div>
         <span class="card-badge" style="${GB[v.genre]}">${GL[v.genre]}</span>
-        ${isAdmin?`<div class="card-actions">
-          <button class="btn btn-sm btn-ghost" onclick="openEdit('${k}')">✏️ 編集</button>
-          <button class="btn btn-sm btn-ghost" style="color:#a32d2d" onclick="delItem('${k}')">削除</button>
-        </div>`:''}
       </div>
     </div>`;
   }).join('');
@@ -617,17 +646,13 @@ function renderList() {
   if(!tm.length){ document.getElementById('listView').innerHTML='<div class="empty">この月の登録アイテムはありません</div>'; return; }
   document.getElementById('listView').innerHTML = tm.map(([k,v])=>{
     const d=new Date(v.date+'T00:00:00');
-    return `<div class="list-item">
+    return `<div class="list-item" onclick="openDetail('${k}')" style="cursor:pointer">
       ${imgTag(v,'list-thumb','list-thumb-ph')}
       <div class="list-info">
-        <div class="list-name">${v.url?`<a href="${v.url}" target="_blank" style="color:inherit;text-decoration:none">${v.name}</a>`:v.name}</div>
+        <div class="list-name">${v.name}</div>
         <div class="list-meta">${d.getMonth()+1}/${d.getDate()}${v.note?` · ${v.note}`:''}</div>
       </div>
       <span class="list-badge" style="${GB[v.genre]}">${GL[v.genre]}</span>
-      ${isAdmin?`<div class="list-acts">
-        <button class="icon-btn" onclick="openEdit('${k}')">✏️</button>
-        <button class="icon-btn danger" onclick="delItem('${k}')">✕</button>
-      </div>`:''}
     </div>`;
   }).join('');
 }
@@ -718,9 +743,33 @@ window.saveItem = () => {
 };
 window.delItem = k => {
   if(!confirm('削除しますか？')) return;
-  remove(ref(db,'items/'+k)).catch(err=>{
-    alert('削除に失敗しました。\n'+err.message);
-  });
+  // 削除前にadminKeyをセットしてからremove
+  set(ref(db,'items/'+k+'/adminKey'), ADMIN_PASSWORD)
+    .then(()=> remove(ref(db,'items/'+k)))
+    .catch(err=>{ alert('削除に失敗しました。\n'+err.message); });
+  closeModal('detailModal');
+};
+
+window.openDetail = k => {
+  const v = items[k]; if(!v) return;
+  const d = new Date(v.date+'T00:00:00');
+  const dateStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  document.getElementById('detailImgWrap').innerHTML = v.img
+    ? `<img src="${v.img}" class="detail-img" onerror="this.outerHTML='<div class=detail-img-ph>${GE[v.genre]}</div>'" />`
+    : `<div class="detail-img-ph">${GE[v.genre]}</div>`;
+  document.getElementById('detailName').textContent = v.name;
+  document.getElementById('detailBadge').textContent = GL[v.genre];
+  document.getElementById('detailBadge').style = GB[v.genre];
+  document.getElementById('detailDate').textContent = dateStr;
+  document.getElementById('detailNote').textContent = v.note||'';
+  const acts = [];
+  if(v.url) acts.push(`<a href="${v.url}" target="_blank" class="btn btn-accent btn-sm">🔗 商品ページを開く</a>`);
+  if(isAdmin) {
+    acts.push(`<button class="btn btn-sm" onclick="closeModal('detailModal');openEdit('${k}')">✏️ 編集</button>`);
+    acts.push(`<button class="btn btn-sm" style="color:#a32d2d" onclick="delItem('${k}')">🗑 削除</button>`);
+  }
+  document.getElementById('detailActs').innerHTML = acts.join('');
+  document.getElementById('detailModal').classList.add('open');
 };
 
 
@@ -728,7 +777,7 @@ window.delItem = k => {
 // ── Modal helpers ──
 window.closeModal = id => document.getElementById(id).classList.remove('open');
 window.bgClick = (e,id) => { if(e.target===document.getElementById(id)) closeModal(id); };
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeModal('itemModal'); closeModal('loginModal'); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeModal('itemModal'); closeModal('loginModal'); closeModal('detailModal'); } });
 
 // init pills
 updatePills();
