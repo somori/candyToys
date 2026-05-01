@@ -245,48 +245,7 @@ body {
 
 .empty { text-align: center; padding: 3rem; color: var(--text3); font-size: 14px; }
 
-/* ── AI Section ── */
-.ai-section {
-  margin-top: 1.5rem; background: var(--surface);
-  border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 1.25rem;
-  box-shadow: var(--shadow);
-}
-.ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.ai-label {
-  font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 99px;
-  background: var(--accent); color: white; letter-spacing: 1px;
-}
-.ai-title { font-size: 14px; font-weight: 700; }
-.ai-row { display: flex; gap: 7px; }
-.ai-input {
-  flex: 1; padding: 8px 12px; border: 1px solid var(--border2); border-radius: var(--radius);
-  font-size: 13px; background: var(--bg); color: var(--text); font-family: inherit;
-}
-.ai-input:focus { outline: none; border-color: var(--accent); }
-.ai-results { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-.ai-item {
-  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
-  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
-}
-.ai-item-img {
-  width: 40px; height: 40px; border-radius: 6px; object-fit: cover;
-  background: var(--bg2); flex-shrink: 0;
-}
-.ai-item-img-ph {
-  width: 40px; height: 40px; border-radius: 6px; background: var(--bg2);
-  display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
-}
-.ai-item-info { flex: 1; min-width: 0; }
-.ai-item-name { font-size: 13px; font-weight: 700; }
-.ai-item-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
-.ai-add-btn {
-  padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border2);
-  background: none; cursor: pointer; font-size: 12px; font-weight: 700;
-  color: var(--text); white-space: nowrap; font-family: inherit; transition: all 0.12s;
-}
-.ai-add-btn:hover { background: var(--bg2); }
-.ai-add-btn.added { background: #eaf3de; color: #3b6d11; border-color: #97c459; }
-.ai-status { font-size: 13px; color: var(--text2); padding: 4px 0; }
+
 .spinner {
   display: inline-block; width: 13px; height: 13px;
   border: 2px solid var(--border2); border-top-color: var(--accent);
@@ -426,18 +385,7 @@ body {
     <div class="list-view" id="listView"></div>
   </div>
 
-  <!-- AI search (admin only) -->
-  <div class="ai-section" id="aiSection" style="display:none">
-    <div class="ai-header">
-      <span class="ai-label">AI</span>
-      <span class="ai-title">発売情報を検索して追加</span>
-    </div>
-    <div class="ai-row">
-      <input class="ai-input" id="aiInput" placeholder="例：バンダイ 食玩 2025夏、ポケモン ガチャ" onkeydown="if(event.key==='Enter')aiSearch()" />
-      <button class="btn btn-accent" onclick="aiSearch()">検索</button>
-    </div>
-    <div class="ai-results" id="aiResults"></div>
-  </div>
+
 </div>
 
 <!-- Add/Edit Modal -->
@@ -705,7 +653,7 @@ function updateAdminUI(){
   document.getElementById('adminBadge').classList.toggle('show',isAdmin);
   document.getElementById('adminBtn').textContent=isAdmin?'ログアウト':'管理者';
   document.getElementById('addBtn').style.display=isAdmin?'':'none';
-  document.getElementById('aiSection').style.display=isAdmin?'':'none';
+
   render();
 }
 
@@ -767,61 +715,7 @@ window.delItem = k => {
   remove(ref(db,'items/'+k));
 };
 
-// ── AI Search ──
-window.aiSearch = async () => {
-  const q=document.getElementById('aiInput').value.trim(); if(!q) return;
-  const el=document.getElementById('aiResults');
-  el.innerHTML='<div class="ai-status"><span class="spinner"></span>検索中...</div>';
-  try {
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:1500,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        system:`あなたは食玩・ガチャガチャ・フィギュアの発売情報専門アシスタントです。
-ユーザーのクエリで発売予定商品をWeb検索し、以下のJSON形式のみを返してください：
-{"items":[{"name":"商品名","date":"YYYY-MM-DD","genre":"shokugan|gacha|figure","note":"メーカーや種類など","url":"公式/販売URL","img":"商品画像URL"}]}
-ルール：genreはshokugan/gacha/figureのいずれか。imgは実際の商品画像URL（見つからなければ空文字）。発売月のみ判明の場合はその月の1日。最大6件。JSONのみ返す。`,
-        messages:[{role:'user',content:`発売情報を調べて: ${q}`}]
-      })
-    });
-    const data=await res.json();
-    const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-    const match=text.match(/\{[\s\S]*\}/);
-    if(!match) throw new Error('parse');
-    const found=JSON.parse(match[0]).items||[];
-    if(!found.length){ el.innerHTML='<div class="ai-status">該当する情報が見つかりませんでした</div>'; return; }
-    window._aiItems=found;
-    el.innerHTML=found.map((v,i)=>{
-      const imgHtml=v.img
-        ?`<img src="${v.img}" class="ai-item-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div class="ai-item-img-ph" style="display:none">${GE[v.genre]||'🎁'}</div>`
-        :`<div class="ai-item-img-ph">${GE[v.genre]||'🎁'}</div>`;
-      return `<div class="ai-item">
-        ${imgHtml}
-        <div class="ai-item-info">
-          <div class="ai-item-name">${v.name}</div>
-          <div class="ai-item-meta">${GL[v.genre]||v.genre} · ${v.date||'日付不明'}${v.note?'・'+v.note:''}</div>
-        </div>
-        <button class="ai-add-btn" id="aib${i}" onclick="addAi(${i})">＋ 追加</button>
-      </div>`;
-    }).join('');
-  } catch(e){
-    el.innerHTML='<div class="ai-status">検索に失敗しました。手動で追加してみてください。</div>';
-  }
-};
-window.addAi = i => {
-  const v=window._aiItems[i]; if(!v) return;
-  push(itemsRef,{
-    name:v.name, date:v.date||new Date().toISOString().slice(0,10),
-    genre:v.genre||'figure', note:v.note||'', url:v.url||'', img:v.img||'',
-    updatedAt:Date.now()
-  });
-  const btn=document.getElementById('aib'+i);
-  if(btn){btn.textContent='✓ 追加済';btn.classList.add('added');btn.disabled=true;}
-  const d=new Date((v.date||new Date().toISOString().slice(0,10))+'T00:00:00');
-  year=d.getFullYear(); month=d.getMonth();
-};
+
 
 // ── Modal helpers ──
 window.closeModal = id => document.getElementById(id).classList.remove('open');
