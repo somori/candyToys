@@ -4,535 +4,832 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>食玩・ガチャ 発売カレンダー</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #fafaf8;
-  --bg2: #f3f2ee;
-  --bg3: #ebebе6;
-  --text: #1a1a18;
-  --text2: #6b6b67;
-  --text3: #a0a09a;
-  --border: rgba(0,0,0,0.1);
-  --border2: rgba(0,0,0,0.18);
+  --bg: #f7f5f0;
+  --bg2: #eeeae2;
+  --bg3: #e4dfd5;
+  --surface: #fffefb;
+  --text: #1c1a16;
+  --text2: #6b6558;
+  --text3: #a09890;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.14);
+  --accent: #e8622a;
+  --accent2: #f5a623;
   --radius: 10px;
-  --radius-lg: 14px;
-  --shadow: 0 1px 4px rgba(0,0,0,0.07);
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.07);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  --shokugan: #FAC775;
+  --shokugan-dark: #7a4800;
+  --gacha: #7ed9b8;
+  --gacha-dark: #0a4a33;
+  --figure: #93c4f0;
+  --figure-dark: #0a3560;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #18181a;
-    --bg2: #232325;
-    --bg3: #2c2c2f;
-    --text: #f0f0ec;
-    --text2: #9a9a96;
-    --text3: #5c5c5a;
-    --border: rgba(255,255,255,0.1);
-    --border2: rgba(255,255,255,0.18);
-    --shadow: 0 1px 4px rgba(0,0,0,0.3);
+    --bg: #16140f;
+    --bg2: #1e1c16;
+    --bg3: #26231b;
+    --surface: #1e1c16;
+    --text: #f0ece3;
+    --text2: #9a9080;
+    --text3: #5c5548;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
   }
 }
 
 body {
-  font-family: -apple-system, 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+  font-family: 'Noto Sans JP', sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
-  padding-bottom: 3rem;
 }
 
-.app { max-width: 860px; margin: 0 auto; padding: 1.5rem 1rem; }
-
-/* Header */
+/* ── Header ── */
 .header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 1.5rem; gap: 12px; flex-wrap: wrap;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.5rem;
+  position: sticky; top: 0; z-index: 50;
 }
-.logo { display: flex; align-items: center; gap: 10px; }
-.logo-icon {
-  width: 36px; height: 36px; border-radius: 10px;
-  background: linear-gradient(135deg, #FAC775 0%, #9FE1CB 50%, #B5D4F4 100%);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
+.header-inner {
+  max-width: 960px; margin: 0 auto;
+  display: flex; align-items: center; gap: 12px;
+  height: 58px;
 }
-.logo h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
-.header-actions { display: flex; gap: 8px; align-items: center; }
+.logo {
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px; font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+.logo span { font-size: 20px; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+/* Admin badge */
+.admin-badge {
+  font-size: 11px; font-weight: 700; padding: 3px 10px;
+  border-radius: 99px; background: var(--accent); color: white;
+  display: none;
+}
+.admin-badge.show { display: inline-block; }
 
 /* Buttons */
-.btn { padding: 7px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border2); background: var(--bg); color: var(--text); transition: background 0.12s; }
+.btn {
+  padding: 7px 15px; border-radius: var(--radius); font-size: 13px;
+  font-weight: 500; cursor: pointer; border: 1px solid var(--border2);
+  background: var(--surface); color: var(--text);
+  transition: all 0.15s; font-family: inherit;
+}
 .btn:hover { background: var(--bg2); }
-.btn-primary { background: var(--text); color: var(--bg); border-color: transparent; }
-.btn-primary:hover { opacity: 0.85; background: var(--text); }
+.btn:active { transform: scale(0.97); }
+.btn-accent {
+  background: var(--accent); color: white; border-color: transparent;
+}
+.btn-accent:hover { background: #d0511e; }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+.btn-ghost { border-color: transparent; background: transparent; }
+.btn-ghost:hover { background: var(--bg2); }
 
-/* View toggle */
-.view-toggle { display: flex; border: 1px solid var(--border2); border-radius: var(--radius); overflow: hidden; }
-.view-btn { background: none; border: none; padding: 6px 12px; cursor: pointer; font-size: 12px; color: var(--text2); transition: background 0.12s; }
-.view-btn.active { background: var(--bg2); color: var(--text); font-weight: 500; }
+/* ── App body ── */
+.app { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
 
 /* Genre filters */
-.genre-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; }
-.genre-pill {
-  padding: 5px 13px; border-radius: 99px; font-size: 12px; font-weight: 500;
-  cursor: pointer; border: 1.5px solid transparent; transition: opacity 0.15s, transform 0.1s;
-  user-select: none;
+.filters-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.2rem; }
+.pill {
+  padding: 5px 14px; border-radius: 99px; font-size: 12px; font-weight: 700;
+  cursor: pointer; border: 2px solid transparent; transition: opacity 0.15s, transform 0.1s;
+  user-select: none; letter-spacing: 0.3px;
 }
-.genre-pill:active { transform: scale(0.96); }
-.genre-pill.inactive { opacity: 0.35; }
-.pill-all   { background: var(--bg2); color: var(--text2); border-color: var(--border2); }
-.pill-shokugan { background: #FAC775; color: #5a3500; border-color: #d4933a; }
-.pill-gacha    { background: #9FE1CB; color: #064530; border-color: #2aaa7a; }
-.pill-figure   { background: #B5D4F4; color: #0a3d72; border-color: #4a9ae0; }
+.pill:active { transform: scale(0.95); }
+.pill.off { opacity: 0.3; }
+.pill-all { background: var(--bg3); color: var(--text2); border-color: var(--border2); }
+.pill-shokugan { background: var(--shokugan); color: var(--shokugan-dark); }
+.pill-gacha    { background: var(--gacha);    color: var(--gacha-dark); }
+.pill-figure   { background: var(--figure);   color: var(--figure-dark); }
 
 /* Nav */
-.nav-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
-.nav-btn { background: none; border: 1px solid var(--border2); border-radius: var(--radius); padding: 6px 14px; cursor: pointer; font-size: 15px; color: var(--text); transition: background 0.12s; }
-.nav-btn:hover { background: var(--bg2); }
-.month-label { font-size: 17px; font-weight: 600; flex: 1; text-align: center; letter-spacing: -0.3px; }
-
-/* Calendar */
-.cal-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg2); box-shadow: var(--shadow); }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); }
-.cal-header { background: var(--bg2); padding: 8px 4px; text-align: center; font-size: 11px; color: var(--text2); font-weight: 600; letter-spacing: 0.5px; }
-.cal-day { background: var(--bg); min-height: 82px; padding: 5px; cursor: default; }
-.cal-day.other-month { background: var(--bg2); }
-.cal-day.has-item { cursor: pointer; }
-.cal-day.has-item:hover { background: var(--bg2); }
-.day-num-wrap { display: flex; justify-content: flex-end; margin-bottom: 3px; }
-.day-num { font-size: 11px; color: var(--text3); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 500; }
-.cal-day.today .day-num { background: #378ADD; color: white; font-weight: 700; }
-.cal-day.other-month .day-num { color: var(--text3); opacity: 0.5; }
-.event-chip {
-  font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-bottom: 2px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;
-  line-height: 1.4;
+.nav-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;
 }
-.chip-shokugan { background: #FAC775; color: #5a3500; }
-.chip-gacha    { background: #9FE1CB; color: #064530; }
-.chip-figure   { background: #B5D4F4; color: #0a3d72; }
-.chip-more { font-size: 10px; color: var(--text3); padding-left: 3px; }
+.nav-arrow {
+  width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; cursor: pointer; border: 1px solid var(--border2);
+  background: var(--surface); font-size: 16px; transition: background 0.12s;
+  color: var(--text);
+}
+.nav-arrow:hover { background: var(--bg2); }
+.month-title {
+  flex: 1; text-align: center;
+  font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.view-toggle {
+  display: flex; border: 1px solid var(--border2); border-radius: var(--radius);
+  overflow: hidden; background: var(--surface);
+}
+.vbtn {
+  background: none; border: none; padding: 6px 12px; cursor: pointer;
+  font-size: 12px; color: var(--text2); font-family: inherit; font-weight: 500;
+  transition: background 0.12s;
+}
+.vbtn.on { background: var(--bg2); color: var(--text); }
 
-/* List view */
-.list-view { display: none; flex-direction: column; gap: 6px; }
-.list-view.visible { display: flex; }
-.list-empty { text-align: center; padding: 3rem; color: var(--text3); font-size: 14px; }
+/* Stats chips */
+.stats-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+.stat-chip {
+  font-size: 12px; padding: 4px 11px; border-radius: 99px;
+  background: var(--surface); color: var(--text2);
+  border: 1px solid var(--border); font-weight: 500;
+}
+
+/* ── Calendar ── */
+.cal-wrap {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow);
+}
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 1px; background: var(--border); }
+.cal-head { background: var(--bg2); padding: 8px 0; text-align: center; font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: 1px; }
+.cal-head:first-child { color: #e05050; }
+.cal-head:last-child  { color: #5080e0; }
+.cal-day {
+  background: var(--surface); min-height: 88px; padding: 5px;
+  cursor: default; transition: background 0.1s;
+}
+.cal-day.other { background: var(--bg); }
+.cal-day.clickable { cursor: pointer; }
+.cal-day.clickable:hover { background: var(--bg2); }
+.cal-day.today .dnum { background: var(--accent); color: white; border-radius: 50%; }
+.cal-day:first-child .dnum, .cal-day.sun .dnum { color: #e05050; }
+.cal-day.sat .dnum { color: #5080e0; }
+.dnum-wrap { display: flex; justify-content: flex-end; margin-bottom: 3px; }
+.dnum { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--text3); }
+.cal-day.other .dnum { opacity: 0.35; }
+.chip {
+  font-size: 10px; padding: 2px 6px; border-radius: 5px; margin-bottom: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700;
+  line-height: 1.5; display: block;
+}
+.chip-shokugan { background: var(--shokugan); color: var(--shokugan-dark); }
+.chip-gacha    { background: var(--gacha);    color: var(--gacha-dark); }
+.chip-figure   { background: var(--figure);   color: var(--figure-dark); }
+.chip-more { font-size: 10px; color: var(--text3); padding-left: 3px; font-weight: 500; }
+
+/* ── Card Grid (image view) ── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+.item-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.item-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.card-img {
+  width: 100%; aspect-ratio: 1; object-fit: cover;
+  background: var(--bg2); display: block;
+}
+.card-img-placeholder {
+  width: 100%; aspect-ratio: 1; background: var(--bg2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px;
+}
+.card-body { padding: 10px; }
+.card-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; line-height: 1.4; }
+.card-date { font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+.card-badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 99px;
+  font-weight: 700; display: inline-block;
+}
+.card-actions { display: flex; gap: 4px; margin-top: 8px; }
+
+/* ── List View ── */
+.list-view { display: flex; flex-direction: column; gap: 6px; }
 .list-item {
   display: flex; align-items: center; gap: 12px;
-  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg);
-  padding: 10px 14px; box-shadow: var(--shadow);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 10px 14px; box-shadow: var(--shadow);
 }
-.list-date { font-size: 12px; color: var(--text2); min-width: 52px; font-weight: 500; }
-.list-name { flex: 1; font-size: 14px; }
-.list-note { font-size: 11px; color: var(--text3); margin-top: 1px; }
-.list-badge { font-size: 11px; padding: 3px 9px; border-radius: 99px; font-weight: 600; white-space: nowrap; }
-.badge-shokugan { background: #FAC775; color: #5a3500; }
-.badge-gacha    { background: #9FE1CB; color: #064530; }
-.badge-figure   { background: #B5D4F4; color: #0a3d72; }
-.list-edit { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 13px; padding: 3px 7px; border-radius: 6px; }
-.list-edit:hover { background: var(--bg2); color: var(--text); }
-.list-del { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 13px; padding: 3px 7px; border-radius: 6px; }
-.list-del:hover { background: #FCEBEB; color: #A32D2D; }
+.list-thumb {
+  width: 44px; height: 44px; border-radius: 8px; object-fit: cover;
+  background: var(--bg2); flex-shrink: 0;
+}
+.list-thumb-ph {
+  width: 44px; height: 44px; border-radius: 8px; background: var(--bg2);
+  display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
+}
+.list-info { flex: 1; min-width: 0; }
+.list-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.list-badge { font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 700; white-space: nowrap; }
+.list-acts { display: flex; gap: 4px; }
+.icon-btn {
+  background: none; border: none; cursor: pointer; color: var(--text3);
+  padding: 4px 7px; border-radius: 6px; font-size: 14px; transition: background 0.12s;
+}
+.icon-btn:hover { background: var(--bg2); color: var(--text); }
+.icon-btn.danger:hover { background: #fcebeb; color: #a32d2d; }
 
-/* Modal */
+.empty { text-align: center; padding: 3rem; color: var(--text3); font-size: 14px; }
+
+/* ── AI Section ── */
+.ai-section {
+  margin-top: 1.5rem; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+.ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.ai-label {
+  font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 99px;
+  background: var(--accent); color: white; letter-spacing: 1px;
+}
+.ai-title { font-size: 14px; font-weight: 700; }
+.ai-row { display: flex; gap: 7px; }
+.ai-input {
+  flex: 1; padding: 8px 12px; border: 1px solid var(--border2); border-radius: var(--radius);
+  font-size: 13px; background: var(--bg); color: var(--text); font-family: inherit;
+}
+.ai-input:focus { outline: none; border-color: var(--accent); }
+.ai-results { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.ai-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.ai-item-img {
+  width: 40px; height: 40px; border-radius: 6px; object-fit: cover;
+  background: var(--bg2); flex-shrink: 0;
+}
+.ai-item-img-ph {
+  width: 40px; height: 40px; border-radius: 6px; background: var(--bg2);
+  display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.ai-item-info { flex: 1; min-width: 0; }
+.ai-item-name { font-size: 13px; font-weight: 700; }
+.ai-item-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.ai-add-btn {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border2);
+  background: none; cursor: pointer; font-size: 12px; font-weight: 700;
+  color: var(--text); white-space: nowrap; font-family: inherit; transition: all 0.12s;
+}
+.ai-add-btn:hover { background: var(--bg2); }
+.ai-add-btn.added { background: #eaf3de; color: #3b6d11; border-color: #97c459; }
+.ai-status { font-size: 13px; color: var(--text2); padding: 4px 0; }
+.spinner {
+  display: inline-block; width: 13px; height: 13px;
+  border: 2px solid var(--border2); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Modal ── */
 .modal-bg {
-  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
   z-index: 200; align-items: center; justify-content: center; padding: 1rem;
 }
 .modal-bg.open { display: flex; }
 .modal {
-  background: var(--bg); border-radius: var(--radius-lg); border: 1px solid var(--border2);
-  padding: 1.5rem; width: min(440px, 100%); box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-  animation: slideUp 0.18s ease;
+  background: var(--surface); border-radius: var(--radius-xl);
+  border: 1px solid var(--border2); padding: 1.75rem;
+  width: min(480px, 100%); box-shadow: var(--shadow-lg);
+  animation: slideUp 0.2s ease;
+  max-height: 90vh; overflow-y: auto;
 }
-@keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.modal h2 { font-size: 16px; font-weight: 600; margin-bottom: 1.1rem; }
-.form-group { margin-bottom: 12px; }
-.form-group label { font-size: 12px; color: var(--text2); font-weight: 500; display: block; margin-bottom: 5px; }
-.form-group input, .form-group select, .form-group textarea {
-  width: 100%; padding: 8px 11px; border: 1px solid var(--border2); border-radius: var(--radius);
-  font-size: 14px; background: var(--bg); color: var(--text); font-family: inherit;
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 1.25rem; }
+.fg { margin-bottom: 14px; }
+.fg label { font-size: 12px; color: var(--text2); font-weight: 700; display: block; margin-bottom: 5px; letter-spacing: 0.5px; }
+.fg input, .fg select, .fg textarea {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--border2);
+  border-radius: var(--radius); font-size: 14px;
+  background: var(--bg); color: var(--text); font-family: inherit;
   transition: border-color 0.12s;
 }
-.form-group input:focus, .form-group select:focus { outline: none; border-color: #378ADD; }
-.genre-select-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
-.genre-opt { padding: 7px; border-radius: var(--radius); border: 1.5px solid var(--border2); cursor: pointer; text-align: center; font-size: 12px; font-weight: 600; transition: all 0.12s; opacity: 0.5; }
-.genre-opt.selected { opacity: 1; }
-.genre-opt.go-shokugan { background: #FAC775; color: #5a3500; border-color: #d4933a; }
-.genre-opt.go-gacha    { background: #9FE1CB; color: #064530; border-color: #2aaa7a; }
-.genre-opt.go-figure   { background: #B5D4F4; color: #0a3d72; border-color: #4a9ae0; }
-.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
-
-/* AI area */
-.ai-section { margin-top: 1.5rem; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem; }
-.ai-section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.ai-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; background: #378ADD; color: white; letter-spacing: 0.5px; }
-.ai-section h3 { font-size: 13px; font-weight: 600; }
-.ai-row { display: flex; gap: 7px; }
-.ai-row input { flex: 1; padding: 8px 11px; border: 1px solid var(--border2); border-radius: var(--radius); font-size: 13px; background: var(--bg); color: var(--text); font-family: inherit; }
-.ai-row input:focus { outline: none; border-color: #378ADD; }
-.ai-results { margin-top: 10px; }
-.ai-result-item {
-  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
-  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
-  margin-bottom: 6px;
+.fg input:focus, .fg select:focus, .fg textarea:focus { outline: none; border-color: var(--accent); }
+.genre-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+.go {
+  padding: 8px; border-radius: var(--radius); border: 2px solid var(--border2);
+  cursor: pointer; text-align: center; font-size: 12px; font-weight: 700;
+  transition: all 0.12s; opacity: 0.45; font-family: inherit;
 }
-.ai-result-item:last-child { margin-bottom: 0; }
-.ai-item-info { flex: 1; }
-.ai-item-name { font-size: 13px; font-weight: 500; }
-.ai-item-meta { font-size: 11px; color: var(--text2); margin-top: 1px; }
-.ai-add-btn { padding: 4px 11px; border-radius: 6px; border: 1px solid var(--border2); background: none; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; transition: background 0.12s; }
-.ai-add-btn:hover { background: var(--bg2); }
-.ai-add-btn.added { background: #EAF3DE; color: #3B6D11; border-color: #97C459; }
-.ai-status { font-size: 12px; color: var(--text2); padding: 6px 0; }
-.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border2); border-top-color: #378ADD; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: middle; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.go.on { opacity: 1; }
+.go-shokugan { background: var(--shokugan); color: var(--shokugan-dark); border-color: #d4933a; }
+.go-gacha    { background: var(--gacha);    color: var(--gacha-dark);    border-color: #2aaa7a; }
+.go-figure   { background: var(--figure);   color: var(--figure-dark);   border-color: #4a9ae0; }
+.img-preview {
+  width: 100%; max-height: 120px; object-fit: cover; border-radius: var(--radius);
+  margin-top: 6px; display: none; border: 1px solid var(--border);
+}
+.img-preview.show { display: block; }
+.modal-acts { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
 
-/* Stats bar */
-.stats-bar { display: flex; gap: 12px; margin-bottom: 1rem; flex-wrap: wrap; }
-.stat-chip { font-size: 12px; padding: 4px 10px; border-radius: 99px; background: var(--bg2); color: var(--text2); border: 1px solid var(--border); font-weight: 500; }
+/* Login modal */
+.login-modal {
+  background: var(--surface); border-radius: var(--radius-xl);
+  border: 1px solid var(--border2); padding: 2rem;
+  width: min(360px, 100%); box-shadow: var(--shadow-lg);
+  animation: slideUp 0.2s ease; text-align: center;
+}
+.login-modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.login-modal p { font-size: 13px; color: var(--text2); margin-bottom: 1.25rem; }
+.login-modal input {
+  width: 100%; padding: 10px 14px; border: 1px solid var(--border2);
+  border-radius: var(--radius); font-size: 15px; background: var(--bg);
+  color: var(--text); font-family: inherit; text-align: center; letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.login-modal input:focus { outline: none; border-color: var(--accent); }
+.login-err { font-size: 12px; color: #a32d2d; margin-top: -6px; margin-bottom: 10px; display: none; }
+.login-err.show { display: block; }
+
+/* Loading overlay */
+.loading-overlay {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 999; flex-direction: column; gap: 12px;
+}
+.loading-overlay .spinner { width: 28px; height: 28px; border-width: 3px; }
+.loading-overlay p { font-size: 14px; color: var(--text2); }
 </style>
 </head>
 <body>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loadingOverlay">
+  <span class="spinner"></span>
+  <p>読み込み中...</p>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo"><span>🎲</span> CandyToys</div>
+    <div class="header-right">
+      <span class="admin-badge" id="adminBadge">管理者モード</span>
+      <button class="btn btn-sm" id="adminBtn" onclick="toggleAdmin()">管理者</button>
+      <button class="btn btn-sm btn-accent" id="addBtn" onclick="openAdd()" style="display:none">＋ 追加</button>
+    </div>
+  </div>
+</header>
+
+<!-- App -->
 <div class="app">
-
-  <div class="header">
-    <div class="logo">
-      <div class="logo-icon">🎲</div>
-      <h1>食玩・ガチャ 発売カレンダー</h1>
-    </div>
-    <div class="header-actions">
-      <div class="view-toggle">
-        <button class="view-btn active" id="calViewBtn" onclick="setView('cal')">📅 カレンダー</button>
-        <button class="view-btn" id="listViewBtn" onclick="setView('list')">📋 一覧</button>
-      </div>
-      <button class="btn btn-primary" onclick="openAddModal()">＋ 追加</button>
-    </div>
+  <!-- Filters -->
+  <div class="filters-row">
+    <span class="pill pill-all" data-g="all" onclick="toggleGenre('all')">すべて</span>
+    <span class="pill pill-shokugan" data-g="shokugan" onclick="toggleGenre('shokugan')">🍬 食玩</span>
+    <span class="pill pill-gacha" data-g="gacha" onclick="toggleGenre('gacha')">🎰 ガチャガチャ</span>
+    <span class="pill pill-figure" data-g="figure" onclick="toggleGenre('figure')">🗿 フィギュア</span>
   </div>
 
-  <div class="genre-filters" id="genreFilters">
-    <span class="genre-pill pill-all active" data-genre="all" onclick="toggleGenre('all')">すべて</span>
-    <span class="genre-pill pill-shokugan active" data-genre="shokugan" onclick="toggleGenre('shokugan')">🍬 食玩</span>
-    <span class="genre-pill pill-gacha active" data-genre="gacha" onclick="toggleGenre('gacha')">🎰 ガチャガチャ</span>
-    <span class="genre-pill pill-figure active" data-genre="figure" onclick="toggleGenre('figure')">🗿 フィギュア</span>
-  </div>
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow"></div>
 
-  <div class="stats-bar" id="statsBar"></div>
-
+  <!-- Nav -->
   <div class="nav-row">
-    <button class="nav-btn" onclick="prevMonth()">‹</button>
-    <div class="month-label" id="monthLabel"></div>
-    <button class="nav-btn" onclick="nextMonth()">›</button>
+    <div class="nav-arrow" onclick="prevMonth()">‹</div>
+    <div class="month-title" id="monthTitle"></div>
+    <div class="nav-arrow" onclick="nextMonth()">›</div>
+    <div class="view-toggle">
+      <button class="vbtn on" id="vCal" onclick="setView('cal')">📅</button>
+      <button class="vbtn" id="vCard" onclick="setView('card')">🖼</button>
+      <button class="vbtn" id="vList" onclick="setView('list')">📋</button>
+    </div>
   </div>
 
-  <div id="calView">
+  <!-- Calendar view -->
+  <div id="viewCal">
     <div class="cal-wrap">
       <div class="cal-grid" id="calGrid"></div>
     </div>
   </div>
 
-  <div class="list-view" id="listView"></div>
+  <!-- Card view -->
+  <div id="viewCard" style="display:none">
+    <div class="card-grid" id="cardGrid"></div>
+  </div>
 
-  <!-- AI Search -->
-  <div class="ai-section">
-    <div class="ai-section-header">
-      <span class="ai-badge">AI</span>
-      <h3>発売情報を検索して追加</h3>
+  <!-- List view -->
+  <div id="viewList" style="display:none">
+    <div class="list-view" id="listView"></div>
+  </div>
+
+  <!-- AI search (admin only) -->
+  <div class="ai-section" id="aiSection" style="display:none">
+    <div class="ai-header">
+      <span class="ai-label">AI</span>
+      <span class="ai-title">発売情報を検索して追加</span>
     </div>
     <div class="ai-row">
-      <input type="text" id="aiInput" placeholder="例：バンダイ 食玩 2025年夏、ポケモン ガチャ など" onkeydown="if(event.key==='Enter')aiSearch()" />
-      <button class="btn btn-primary" onclick="aiSearch()">検索</button>
+      <input class="ai-input" id="aiInput" placeholder="例：バンダイ 食玩 2025夏、ポケモン ガチャ" onkeydown="if(event.key==='Enter')aiSearch()" />
+      <button class="btn btn-accent" onclick="aiSearch()">検索</button>
     </div>
     <div class="ai-results" id="aiResults"></div>
   </div>
-
 </div>
 
-<!-- Modal -->
-<div class="modal-bg" id="modalBg" onclick="bgClick(event)">
+<!-- Add/Edit Modal -->
+<div class="modal-bg" id="itemModal" onclick="bgClick(event,'itemModal')">
   <div class="modal">
     <h2 id="modalTitle">アイテムを追加</h2>
-    <div class="form-group">
+    <div class="fg">
       <label>商品名 *</label>
       <input type="text" id="fName" placeholder="例：ワンピース DXF Vol.5" />
     </div>
-    <div class="form-group">
+    <div class="fg">
       <label>発売日 *</label>
       <input type="date" id="fDate" />
     </div>
-    <div class="form-group">
+    <div class="fg">
       <label>ジャンル *</label>
-      <div class="genre-select-grid">
-        <div class="genre-opt go-shokugan selected" data-g="shokugan" onclick="selectGenre('shokugan')">🍬 食玩</div>
-        <div class="genre-opt go-gacha" data-g="gacha" onclick="selectGenre('gacha')">🎰 ガチャ</div>
-        <div class="genre-opt go-figure" data-g="figure" onclick="selectGenre('figure')">🗿 フィギュア</div>
+      <div class="genre-grid">
+        <button class="go go-shokugan on" data-g="shokugan" onclick="selGenre('shokugan')">🍬 食玩</button>
+        <button class="go go-gacha" data-g="gacha" onclick="selGenre('gacha')">🎰 ガチャ</button>
+        <button class="go go-figure" data-g="figure" onclick="selGenre('figure')">🗿 フィギュア</button>
       </div>
     </div>
-    <div class="form-group">
+    <div class="fg">
+      <label>画像URL（任意）</label>
+      <input type="text" id="fImg" placeholder="https://..." oninput="previewImg()" />
+      <img id="imgPreview" class="img-preview" />
+    </div>
+    <div class="fg">
       <label>メモ（任意）</label>
       <input type="text" id="fNote" placeholder="例：全6種、バンダイ、600円" />
     </div>
-    <div class="form-group">
-      <label>URL（任意）</label>
-      <input type="text" id="fUrl" placeholder="例：商品ページのURL" />
+    <div class="fg">
+      <label>商品URL（任意）</label>
+      <input type="text" id="fUrl" placeholder="https://..." />
     </div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal()">キャンセル</button>
-      <button class="btn btn-primary" onclick="saveItem()">保存</button>
+    <div class="modal-acts">
+      <button class="btn" onclick="closeModal('itemModal')">キャンセル</button>
+      <button class="btn btn-accent" onclick="saveItem()">保存</button>
     </div>
   </div>
 </div>
 
-<script>
-const STORAGE_KEY = 'gacha_cal_v2';
-let items = [];
-let year = new Date().getFullYear();
+<!-- Login Modal -->
+<div class="modal-bg" id="loginModal" onclick="bgClick(event,'loginModal')">
+  <div class="login-modal">
+    <h2>🔐 管理者ログイン</h2>
+    <p>パスワードを入力してください</p>
+    <input type="password" id="pwInput" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+    <div class="login-err" id="loginErr">パスワードが違います</div>
+    <button class="btn btn-accent" style="width:100%" onclick="doLogin()">ログイン</button>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ============================================================
+// 🔧 設定：あとでここを書き換えてください
+// ============================================================
+const ADMIN_PASSWORD = "Hello!2015!"; // ← ここをあなたのパスワードに変更
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZLsBsHzv_CzWloLdiUahoFdny324DOME",
+  authDomain: "candy-toys-8b49a.firebaseapp.com",
+  databaseURL: "https://candy-toys-8b49a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "candy-toys-8b49a",
+  storageBucket: "candy-toys-8b49a.firebasestorage.app",
+  messagingSenderId: "740561068786",
+  appId: "1:740561068786:web:f25fcf3ccc436c50a5e66b",
+  measurementId: "G-6LM18K2L24"
+};
+// ============================================================
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+const itemsRef = ref(db, 'items');
+
+// ── State ──
+let items = {};
+let year  = new Date().getFullYear();
 let month = new Date().getMonth();
 let activeGenres = new Set(['shokugan','gacha','figure']);
-let currentView = 'cal';
-let editId = null;
-let selectedGenre = 'shokugan';
+let currentView  = 'cal';
+let isAdmin      = false;
+let editKey      = null;
+let selGenreVal  = 'shokugan';
 
-const genreLabel = { shokugan:'食玩', gacha:'ガチャ', figure:'フィギュア' };
-const chipClass   = { shokugan:'chip-shokugan', gacha:'chip-gacha', figure:'chip-figure' };
-const badgeClass  = { shokugan:'badge-shokugan', gacha:'badge-gacha', figure:'badge-figure' };
+// ── Helpers ──
+const GL = { shokugan:'食玩', gacha:'ガチャ', figure:'フィギュア' };
+const GE = { shokugan:'🍬', gacha:'🎰', figure:'🗿' };
+const GC = { shokugan:'chip-shokugan', gacha:'chip-gacha', figure:'chip-figure' };
+const GB = { shokugan:`background:var(--shokugan);color:var(--shokugan-dark)`,
+             gacha:   `background:var(--gacha);color:var(--gacha-dark)`,
+             figure:  `background:var(--figure);color:var(--figure-dark)` };
 
-function load() {
-  try { items = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch(e) { items = []; }
-  if (!items.length) items = defaultItems();
-}
-function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch(e) {} }
-function genId() { return Date.now() + Math.random(); }
+// ── Firebase realtime listener ──
+onValue(itemsRef, snap => {
+  items = snap.val() || {};
+  document.getElementById('loadingOverlay').style.display = 'none';
+  render();
+});
 
-function defaultItems() {
-  const y = new Date().getFullYear();
-  const m = String(new Date().getMonth()+1).padStart(2,'0');
-  return [
-    {id:1, name:'ワンピース DXFサンプル', date:`${y}-${m}-10`, genre:'figure', note:'バンダイ', url:''},
-    {id:2, name:'鬼滅の刃 食玩サンプル', date:`${y}-${m}-15`, genre:'shokugan', note:'全5種', url:''},
-    {id:3, name:'ポケモン ガチャサンプル', date:`${y}-${m}-20`, genre:'gacha', note:'200円', url:''},
-  ];
-}
-
-function toggleGenre(g) {
+// ── Genre toggle ──
+window.toggleGenre = g => {
   if (g === 'all') {
-    activeGenres = activeGenres.size===3 ? new Set() : new Set(['shokugan','gacha','figure']);
+    activeGenres = activeGenres.size === 3 ? new Set() : new Set(['shokugan','gacha','figure']);
   } else {
     if (activeGenres.has(g)) activeGenres.delete(g); else activeGenres.add(g);
   }
   updatePills(); render();
-}
+};
 function updatePills() {
-  document.querySelectorAll('[data-genre]').forEach(p => {
-    const g = p.dataset.genre;
-    const on = g==='all' ? activeGenres.size===3 : activeGenres.has(g);
-    p.classList.toggle('active', on);
-    p.classList.toggle('inactive', !on);
+  document.querySelectorAll('[data-g]').forEach(p => {
+    const g = p.dataset.g;
+    const on = g === 'all' ? activeGenres.size === 3 : activeGenres.has(g);
+    p.classList.toggle('off', !on);
   });
 }
 
-function filtered() { return items.filter(i => activeGenres.has(i.genre)); }
-
-function setView(v) {
+// ── View ──
+window.setView = v => {
   currentView = v;
-  document.getElementById('calView').style.display = v==='cal' ? '' : 'none';
-  document.getElementById('listView').classList.toggle('visible', v==='list');
-  document.getElementById('calViewBtn').classList.toggle('active', v==='cal');
-  document.getElementById('listViewBtn').classList.toggle('active', v==='list');
+  ['cal','card','list'].forEach(n => {
+    document.getElementById('view'+n.charAt(0).toUpperCase()+n.slice(1)).style.display = n===v ? '' : 'none';
+    document.getElementById('v'+n.charAt(0).toUpperCase()+n.slice(1)).classList.toggle('on', n===v);
+  });
   render();
+};
+
+window.prevMonth = () => { if(--month<0){month=11;year--;} render(); };
+window.nextMonth = () => { if(++month>11){month=0;year++;} render(); };
+
+// ── Render ──
+function filtered() {
+  return Object.entries(items)
+    .filter(([,v]) => activeGenres.has(v.genre))
+    .sort(([,a],[,b]) => a.date.localeCompare(b.date));
+}
+function thisMonth() {
+  return filtered().filter(([,v]) => {
+    const d = new Date(v.date+'T00:00:00');
+    return d.getFullYear()===year && d.getMonth()===month;
+  });
 }
 
-function prevMonth() { if(--month<0){month=11;year--;} render(); }
-function nextMonth() { if(++month>11){month=0;year++;} render(); }
-
 function render() {
-  const mNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-  document.getElementById('monthLabel').textContent = `${year}年 ${mNames[month]}`;
+  const mN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  document.getElementById('monthTitle').textContent = `${year}年 ${mN[month]}`;
   renderStats();
-  if (currentView==='cal') renderCal(); else renderList();
+  if (currentView==='cal')  renderCal();
+  if (currentView==='card') renderCard();
+  if (currentView==='list') renderList();
 }
 
 function renderStats() {
-  const thisMonth = filtered().filter(i => {
-    const d = new Date(i.date+'T00:00:00');
-    return d.getFullYear()===year && d.getMonth()===month;
-  });
-  const counts = {shokugan:0,gacha:0,figure:0};
-  thisMonth.forEach(i => counts[i.genre]++);
-  document.getElementById('statsBar').innerHTML =
-    `<span class="stat-chip">この月 ${thisMonth.length}件</span>` +
-    (counts.shokugan ? `<span class="stat-chip">🍬 食玩 ${counts.shokugan}</span>` : '') +
-    (counts.gacha    ? `<span class="stat-chip">🎰 ガチャ ${counts.gacha}</span>` : '') +
-    (counts.figure   ? `<span class="stat-chip">🗿 フィギュア ${counts.figure}</span>` : '');
+  const tm = thisMonth();
+  const cnt = {shokugan:0,gacha:0,figure:0};
+  tm.forEach(([,v])=>cnt[v.genre]++);
+  document.getElementById('statsRow').innerHTML =
+    `<span class="stat-chip">この月 ${tm.length}件</span>` +
+    (cnt.shokugan?`<span class="stat-chip">🍬 食玩 ${cnt.shokugan}</span>`:'') +
+    (cnt.gacha   ?`<span class="stat-chip">🎰 ガチャ ${cnt.gacha}</span>`:'') +
+    (cnt.figure  ?`<span class="stat-chip">🗿 フィギュア ${cnt.figure}</span>`:'');
 }
 
 function renderCal() {
-  const days = ['日','月','火','水','木','金','土'];
-  const first = new Date(year, month, 1).getDay();
-  const last  = new Date(year, month+1, 0).getDate();
+  const dayLabels = ['日','月','火','水','木','金','土'];
+  const first = new Date(year,month,1).getDay();
+  const last  = new Date(year,month+1,0).getDate();
   const today = new Date();
   const byDate = {};
-  filtered().forEach(i => { (byDate[i.date]=byDate[i.date]||[]).push(i); });
+  thisMonth().forEach(([,v])=>{ (byDate[v.date]=byDate[v.date]||[]).push(v); });
 
-  let html = days.map(d=>`<div class="cal-header">${d}</div>`).join('');
-  for (let i=0;i<first;i++) {
-    const d = new Date(year,month,-first+i+1).getDate();
-    html += `<div class="cal-day other-month"><div class="day-num-wrap"><span class="day-num">${d}</span></div></div>`;
+  let h = dayLabels.map((d,i)=>`<div class="cal-head">${d}</div>`).join('');
+  for(let i=0;i<first;i++){
+    const d=new Date(year,month,-first+i+1).getDate();
+    h+=`<div class="cal-day other"><div class="dnum-wrap"><span class="dnum">${d}</span></div></div>`;
   }
-  for (let d=1;d<=last;d++) {
-    const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = today.getFullYear()===year && today.getMonth()===month && today.getDate()===d;
-    const dayItems = byDate[ds]||[];
-    html += `<div class="cal-day ${isToday?'today':''} ${dayItems.length?'has-item':''}" onclick="dayClick('${ds}')">`;
-    html += `<div class="day-num-wrap"><span class="day-num">${d}</span></div>`;
-    dayItems.slice(0,3).forEach(it => {
-      html += `<div class="event-chip ${chipClass[it.genre]}" title="${it.name}">${it.name}</div>`;
+  for(let d=1;d<=last;d++){
+    const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=today.getFullYear()===year&&today.getMonth()===month&&today.getDate()===d;
+    const dow=(new Date(year,month,d).getDay());
+    const dowCls=dow===0?'sun':dow===6?'sat':'';
+    const dayItems=byDate[ds]||[];
+    const clickable=isAdmin?'clickable':'';
+    h+=`<div class="cal-day ${isToday?'today':''} ${dowCls} ${dayItems.length||isAdmin?'clickable':''}" onclick="${isAdmin?`openAdd('${ds}')`:''}" >`;
+    h+=`<div class="dnum-wrap"><span class="dnum">${d}</span></div>`;
+    dayItems.slice(0,3).forEach(v=>{
+      const name=v.url?`<a href="${v.url}" target="_blank" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">${v.name}</a>`:v.name;
+      h+=`<span class="chip ${GC[v.genre]}" title="${v.name}">${name}</span>`;
     });
-    if (dayItems.length>3) html += `<div class="chip-more">+${dayItems.length-3}件</div>`;
-    html += '</div>';
+    if(dayItems.length>3) h+=`<span class="chip-more">+${dayItems.length-3}件</span>`;
+    h+='</div>';
   }
-  const rem = (first+last)%7;
-  if (rem>0) for(let i=1;i<=7-rem;i++) html += `<div class="cal-day other-month"><div class="day-num-wrap"><span class="day-num">${i}</span></div></div>`;
-  document.getElementById('calGrid').innerHTML = html;
+  const rem=(first+last)%7;
+  if(rem>0) for(let i=1;i<=7-rem;i++) h+=`<div class="cal-day other"><div class="dnum-wrap"><span class="dnum">${i}</span></div></div>`;
+  document.getElementById('calGrid').innerHTML=h;
 }
 
-function renderList() {
-  const lv = document.getElementById('listView');
-  const fi = filtered().filter(i => {
-    const d = new Date(i.date+'T00:00:00');
-    return d.getFullYear()===year && d.getMonth()===month;
-  }).sort((a,b)=>a.date.localeCompare(b.date));
-  if (!fi.length) { lv.innerHTML='<div class="list-empty">この月の登録アイテムはありません</div>'; return; }
-  lv.innerHTML = fi.map(it => {
-    const d = new Date(it.date+'T00:00:00');
-    return `<div class="list-item">
-      <span class="list-date">${d.getMonth()+1}/${d.getDate()}</span>
-      <div class="list-name">
-        ${it.url ? `<a href="${it.url}" target="_blank" style="color:inherit;text-decoration:none">${it.name}</a>` : it.name}
-        ${it.note ? `<div class="list-note">${it.note}</div>` : ''}
+function imgTag(v, cls, phCls) {
+  if(v.img) return `<img src="${v.img}" class="${cls}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div class="${phCls}" style="display:none">${GE[v.genre]}</div>`;
+  return `<div class="${phCls}">${GE[v.genre]}</div>`;
+}
+
+function renderCard() {
+  const tm = thisMonth();
+  if(!tm.length){ document.getElementById('cardGrid').innerHTML='<div class="empty" style="grid-column:1/-1">この月の登録アイテムはありません</div>'; return; }
+  document.getElementById('cardGrid').innerHTML = tm.map(([k,v])=>{
+    const d=new Date(v.date+'T00:00:00');
+    return `<div class="item-card">
+      ${imgTag(v,'card-img','card-img-placeholder')}
+      <div class="card-body">
+        <div class="card-name">${v.url?`<a href="${v.url}" target="_blank" style="color:inherit">${v.name}</a>`:v.name}</div>
+        <div class="card-date">${d.getMonth()+1}月${d.getDate()}日${v.note?` · ${v.note}`:''}</div>
+        <span class="card-badge" style="${GB[v.genre]}">${GL[v.genre]}</span>
+        ${isAdmin?`<div class="card-actions">
+          <button class="btn btn-sm btn-ghost" onclick="openEdit('${k}')">✏️ 編集</button>
+          <button class="btn btn-sm btn-ghost" style="color:#a32d2d" onclick="delItem('${k}')">削除</button>
+        </div>`:''}
       </div>
-      <span class="list-badge ${badgeClass[it.genre]}">${genreLabel[it.genre]}</span>
-      <button class="list-edit" onclick="openEditModal(${it.id})" title="編集">✏️</button>
-      <button class="list-del"  onclick="deleteItem(${it.id})"   title="削除">✕</button>
     </div>`;
   }).join('');
 }
 
-function dayClick(ds) { openAddModal(ds); }
-
-function openAddModal(prefillDate) {
-  editId = null;
-  document.getElementById('modalTitle').textContent = 'アイテムを追加';
-  document.getElementById('fName').value = '';
-  document.getElementById('fDate').value = prefillDate||'';
-  document.getElementById('fNote').value = '';
-  document.getElementById('fUrl').value = '';
-  selectGenre('shokugan');
-  document.getElementById('modalBg').classList.add('open');
-  setTimeout(()=>document.getElementById('fName').focus(),100);
+function renderList() {
+  const tm = thisMonth();
+  if(!tm.length){ document.getElementById('listView').innerHTML='<div class="empty">この月の登録アイテムはありません</div>'; return; }
+  document.getElementById('listView').innerHTML = tm.map(([k,v])=>{
+    const d=new Date(v.date+'T00:00:00');
+    return `<div class="list-item">
+      ${imgTag(v,'list-thumb','list-thumb-ph')}
+      <div class="list-info">
+        <div class="list-name">${v.url?`<a href="${v.url}" target="_blank" style="color:inherit;text-decoration:none">${v.name}</a>`:v.name}</div>
+        <div class="list-meta">${d.getMonth()+1}/${d.getDate()}${v.note?` · ${v.note}`:''}</div>
+      </div>
+      <span class="list-badge" style="${GB[v.genre]}">${GL[v.genre]}</span>
+      ${isAdmin?`<div class="list-acts">
+        <button class="icon-btn" onclick="openEdit('${k}')">✏️</button>
+        <button class="icon-btn danger" onclick="delItem('${k}')">✕</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
 }
 
-function openEditModal(id) {
-  const it = items.find(i=>i.id===id); if(!it) return;
-  editId = id;
-  document.getElementById('modalTitle').textContent = 'アイテムを編集';
-  document.getElementById('fName').value = it.name;
-  document.getElementById('fDate').value = it.date;
-  document.getElementById('fNote').value = it.note||'';
-  document.getElementById('fUrl').value  = it.url||'';
-  selectGenre(it.genre);
-  document.getElementById('modalBg').classList.add('open');
-}
-
-function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
-function bgClick(e) { if(e.target===document.getElementById('modalBg')) closeModal(); }
-
-function selectGenre(g) {
-  selectedGenre = g;
-  document.querySelectorAll('.genre-opt').forEach(el => {
-    el.classList.toggle('selected', el.dataset.g===g);
-  });
-}
-
-function saveItem() {
-  const name = document.getElementById('fName').value.trim();
-  const date = document.getElementById('fDate').value;
-  const note = document.getElementById('fNote').value.trim();
-  const url  = document.getElementById('fUrl').value.trim();
-  if (!name||!date) { alert('商品名と発売日は必須です'); return; }
-  if (editId) {
-    const idx = items.findIndex(i=>i.id===editId);
-    if (idx>=0) items[idx] = {...items[idx], name, date, genre:selectedGenre, note, url};
+// ── Admin ──
+window.toggleAdmin = () => {
+  if(isAdmin){ isAdmin=false; updateAdminUI(); return; }
+  document.getElementById('loginModal').classList.add('open');
+  document.getElementById('pwInput').value='';
+  document.getElementById('loginErr').classList.remove('show');
+  setTimeout(()=>document.getElementById('pwInput').focus(),100);
+};
+window.doLogin = () => {
+  if(document.getElementById('pwInput').value === ADMIN_PASSWORD){
+    isAdmin=true;
+    closeModal('loginModal');
+    updateAdminUI();
   } else {
-    items.push({id:genId(), name, date, genre:selectedGenre, note, url});
+    document.getElementById('loginErr').classList.add('show');
   }
-  save(); closeModal();
-  const d = new Date(date+'T00:00:00');
-  year=d.getFullYear(); month=d.getMonth();
+};
+function updateAdminUI(){
+  document.getElementById('adminBadge').classList.toggle('show',isAdmin);
+  document.getElementById('adminBtn').textContent=isAdmin?'ログアウト':'管理者';
+  document.getElementById('addBtn').style.display=isAdmin?'':'none';
+  document.getElementById('aiSection').style.display=isAdmin?'':'none';
   render();
 }
 
-function deleteItem(id) {
-  if (!confirm('このアイテムを削除しますか？')) return;
-  items = items.filter(i=>i.id!==id); save(); render();
-}
+// ── Add/Edit ──
+window.openAdd = (prefillDate) => {
+  editKey=null;
+  document.getElementById('modalTitle').textContent='アイテムを追加';
+  document.getElementById('fName').value='';
+  document.getElementById('fDate').value=prefillDate||'';
+  document.getElementById('fNote').value='';
+  document.getElementById('fUrl').value='';
+  document.getElementById('fImg').value='';
+  document.getElementById('imgPreview').classList.remove('show');
+  selGenre('shokugan');
+  document.getElementById('itemModal').classList.add('open');
+  setTimeout(()=>document.getElementById('fName').focus(),100);
+};
+window.openEdit = k => {
+  const v=items[k]; if(!v) return;
+  editKey=k;
+  document.getElementById('modalTitle').textContent='アイテムを編集';
+  document.getElementById('fName').value=v.name;
+  document.getElementById('fDate').value=v.date;
+  document.getElementById('fNote').value=v.note||'';
+  document.getElementById('fUrl').value=v.url||'';
+  document.getElementById('fImg').value=v.img||'';
+  previewImg();
+  selGenre(v.genre);
+  document.getElementById('itemModal').classList.add('open');
+};
+window.selGenre = g => {
+  selGenreVal=g;
+  document.querySelectorAll('.go').forEach(b=>b.classList.toggle('on',b.dataset.g===g));
+};
+window.previewImg = () => {
+  const url=document.getElementById('fImg').value.trim();
+  const img=document.getElementById('imgPreview');
+  if(url){ img.src=url; img.classList.add('show'); } else { img.classList.remove('show'); }
+};
+window.saveItem = () => {
+  const name=document.getElementById('fName').value.trim();
+  const date=document.getElementById('fDate').value;
+  if(!name||!date){ alert('商品名と発売日は必須です'); return; }
+  const data={
+    name, date, genre:selGenreVal,
+    note:document.getElementById('fNote').value.trim(),
+    url: document.getElementById('fUrl').value.trim(),
+    img: document.getElementById('fImg').value.trim(),
+    updatedAt: Date.now()
+  };
+  if(editKey){ set(ref(db,'items/'+editKey),data); }
+  else { push(itemsRef,data); }
+  closeModal('itemModal');
+  const d=new Date(date+'T00:00:00');
+  year=d.getFullYear(); month=d.getMonth();
+};
+window.delItem = k => {
+  if(!confirm('削除しますか？')) return;
+  remove(ref(db,'items/'+k));
+};
 
-// AI Search
-async function aiSearch() {
-  const q = document.getElementById('aiInput').value.trim();
-  if (!q) return;
-  const el = document.getElementById('aiResults');
-  el.innerHTML = '<div class="ai-status"><span class="spinner"></span>検索中...</div>';
-
+// ── AI Search ──
+window.aiSearch = async () => {
+  const q=document.getElementById('aiInput').value.trim(); if(!q) return;
+  const el=document.getElementById('aiResults');
+  el.innerHTML='<div class="ai-status"><span class="spinner"></span>検索中...</div>';
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        system: `あなたは食玩・ガチャガチャ・フィギュアの発売情報専門アシスタントです。
-ユーザーのクエリで発売予定商品をWeb検索し、以下のJSON形式のみを返してください。前置き・説明文は不要です：
-{"items":[{"name":"商品名","date":"YYYY-MM-DD","genre":"shokugan|gacha|figure","note":"メーカーや種類など短いメモ","url":"公式や販売ページURL（あれば）"}]}
-ルール：genreはshokugan/gacha/figureのいずれか。発売日が月しかわからない場合はその月の1日。不明な場合は今月末。最大6件。`,
-        messages: [{role:'user', content:`発売情報を調べて: ${q}`}]
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1500,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        system:`あなたは食玩・ガチャガチャ・フィギュアの発売情報専門アシスタントです。
+ユーザーのクエリで発売予定商品をWeb検索し、以下のJSON形式のみを返してください：
+{"items":[{"name":"商品名","date":"YYYY-MM-DD","genre":"shokugan|gacha|figure","note":"メーカーや種類など","url":"公式/販売URL","img":"商品画像URL"}]}
+ルール：genreはshokugan/gacha/figureのいずれか。imgは実際の商品画像URL（見つからなければ空文字）。発売月のみ判明の場合はその月の1日。最大6件。JSONのみ返す。`,
+        messages:[{role:'user',content:`発売情報を調べて: ${q}`}]
       })
     });
-    const data = await res.json();
-    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('no json');
-    const found = JSON.parse(match[0]).items||[];
-    if (!found.length) { el.innerHTML='<div class="ai-status">該当する情報が見つかりませんでした。別のキーワードを試してみてください。</div>'; return; }
-    window._aiItems = found;
-    el.innerHTML = `<div class="ai-status">${found.length}件見つかりました</div>` +
-      found.map((it,i) => `<div class="ai-result-item">
+    const data=await res.json();
+    const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const match=text.match(/\{[\s\S]*\}/);
+    if(!match) throw new Error('parse');
+    const found=JSON.parse(match[0]).items||[];
+    if(!found.length){ el.innerHTML='<div class="ai-status">該当する情報が見つかりませんでした</div>'; return; }
+    window._aiItems=found;
+    el.innerHTML=found.map((v,i)=>{
+      const imgHtml=v.img
+        ?`<img src="${v.img}" class="ai-item-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div class="ai-item-img-ph" style="display:none">${GE[v.genre]||'🎁'}</div>`
+        :`<div class="ai-item-img-ph">${GE[v.genre]||'🎁'}</div>`;
+      return `<div class="ai-item">
+        ${imgHtml}
         <div class="ai-item-info">
-          <div class="ai-item-name">${it.name}</div>
-          <div class="ai-item-meta">${genreLabel[it.genre]||it.genre} · ${it.date||'日付不明'}${it.note?'・'+it.note:''}</div>
+          <div class="ai-item-name">${v.name}</div>
+          <div class="ai-item-meta">${GL[v.genre]||v.genre} · ${v.date||'日付不明'}${v.note?'・'+v.note:''}</div>
         </div>
-        <button class="ai-add-btn" id="aibtn${i}" onclick="addAiItem(${i})">＋ 追加</button>
-      </div>`).join('');
-  } catch(e) {
-    el.innerHTML = '<div class="ai-status">検索に失敗しました。手動で追加してみてください。</div>';
+        <button class="ai-add-btn" id="aib${i}" onclick="addAi(${i})">＋ 追加</button>
+      </div>`;
+    }).join('');
+  } catch(e){
+    el.innerHTML='<div class="ai-status">検索に失敗しました。手動で追加してみてください。</div>';
   }
-}
-
-function addAiItem(i) {
-  const it = window._aiItems[i]; if(!it) return;
-  items.push({id:genId(), name:it.name, date:it.date||new Date().toISOString().slice(0,10), genre:it.genre||'figure', note:it.note||'', url:it.url||''});
-  save();
-  const btn = document.getElementById('aibtn'+i);
+};
+window.addAi = i => {
+  const v=window._aiItems[i]; if(!v) return;
+  push(itemsRef,{
+    name:v.name, date:v.date||new Date().toISOString().slice(0,10),
+    genre:v.genre||'figure', note:v.note||'', url:v.url||'', img:v.img||'',
+    updatedAt:Date.now()
+  });
+  const btn=document.getElementById('aib'+i);
   if(btn){btn.textContent='✓ 追加済';btn.classList.add('added');btn.disabled=true;}
-  const d = new Date((it.date||new Date().toISOString().slice(0,10))+'T00:00:00');
+  const d=new Date((v.date||new Date().toISOString().slice(0,10))+'T00:00:00');
   year=d.getFullYear(); month=d.getMonth();
-  render();
-}
+};
 
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
-load();
-render();
+// ── Modal helpers ──
+window.closeModal = id => document.getElementById(id).classList.remove('open');
+window.bgClick = (e,id) => { if(e.target===document.getElementById(id)) closeModal(id); };
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeModal('itemModal'); closeModal('loginModal'); } });
+
+// init pills
+updatePills();
 </script>
 </body>
 </html>
