@@ -702,17 +702,25 @@ window.saveItem = () => {
     note:document.getElementById('fNote').value.trim(),
     url: document.getElementById('fUrl').value.trim(),
     img: document.getElementById('fImg').value.trim(),
+    adminKey: ADMIN_PASSWORD,
     updatedAt: Date.now()
   };
-  if(editKey){ set(ref(db,'items/'+editKey),data); }
-  else { push(itemsRef,data); }
-  closeModal('itemModal');
-  const d=new Date(date+'T00:00:00');
-  year=d.getFullYear(); month=d.getMonth();
+  const p = editKey
+    ? set(ref(db,'items/'+editKey), data)
+    : push(itemsRef, data);
+  p.then(()=>{
+    closeModal('itemModal');
+    const d=new Date(date+'T00:00:00');
+    year=d.getFullYear(); month=d.getMonth();
+  }).catch(err=>{
+    alert('保存に失敗しました。Firebaseのルール設定を確認してください。\n'+err.message);
+  });
 };
 window.delItem = k => {
   if(!confirm('削除しますか？')) return;
-  remove(ref(db,'items/'+k));
+  remove(ref(db,'items/'+k)).catch(err=>{
+    alert('削除に失敗しました。\n'+err.message);
+  });
 };
 
 
