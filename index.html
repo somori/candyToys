@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-------
+
 :root {
   --bg: #f7f5f0;
   --bg2: #eeeae2;
@@ -195,26 +195,46 @@ body {
 .item-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow);
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s; cursor: pointer;
 }
 .item-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.card-img-wrap { position: relative; width: 100%; aspect-ratio: 1; }
 .card-img {
-  width: 100%; aspect-ratio: 1; object-fit: cover;
+  width: 100%; height: 100%; object-fit: cover;
   background: var(--bg2); display: block;
 }
 .card-img-placeholder {
-  width: 100%; aspect-ratio: 1; background: var(--bg2);
+  width: 100%; height: 100%; background: var(--bg2);
   display: flex; align-items: center; justify-content: center;
-  font-size: 36px;
+  font-size: 48px;
 }
-.card-body { padding: 10px; }
-.card-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; line-height: 1.4; }
-.card-date { font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+.card-date-overlay {
+  position: absolute; top: 0; left: 0; right: 0;
+  padding: 8px 10px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.card-date-day {
+  font-family: 'Poppins', sans-serif;
+  font-size: 28px; font-weight: 700; color: white; line-height: 1;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.card-date-label {
+  font-size: 11px; color: rgba(255,255,255,0.85); font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  margin-top: 1px;
+}
+.card-body { padding: 8px 10px 10px; }
+.card-name { font-size: 12px; font-weight: 700; margin-bottom: 5px; line-height: 1.4; }
 .card-badge {
   font-size: 10px; padding: 2px 8px; border-radius: 99px;
   font-weight: 700; display: inline-block;
 }
-.card-actions { display: flex; gap: 4px; margin-top: 8px; }
+.card-vague-badge {
+  display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 4px;
+  background: var(--bg2); color: var(--text2); font-weight: 700; margin-left: 4px;
+  border: 1px solid var(--border2);
+}
 
 /* ── List View ── */
 .list-view { display: flex; flex-direction: column; gap: 6px; }
@@ -380,8 +400,8 @@ body {
     <div class="month-title" id="monthTitle"></div>
     <div class="nav-arrow" onclick="nextMonth()">›</div>
     <div class="view-toggle">
-      <button class="vbtn on" id="vCal" onclick="setView('cal')">📅</button>
-      <button class="vbtn" id="vCard" onclick="setView('card')">🖼</button>
+      <button class="vbtn" id="vCal" onclick="setView('cal')">📅</button>
+      <button class="vbtn on" id="vCard" onclick="setView('card')">🖼</button>
       <button class="vbtn" id="vList" onclick="setView('list')">📋</button>
     </div>
   </div>
@@ -415,8 +435,31 @@ body {
       <input type="text" id="fName" placeholder="例：ワンピース DXF Vol.5" />
     </div>
     <div class="fg">
-      <label>発売日 *</label>
+      <label>発売時期 *</label>
+      <select id="fDateType" onchange="updateDateFields()">
+        <option value="exact">日付が決まっている</option>
+        <option value="month">月だけわかる</option>
+        <option value="period">時期がわかる（上旬・中旬・下旬）</option>
+      </select>
+    </div>
+    <div class="fg" id="fDateExactWrap">
+      <label>発売日</label>
       <input type="date" id="fDate" />
+    </div>
+    <div class="fg" id="fDateMonthWrap" style="display:none">
+      <label>年月</label>
+      <input type="month" id="fDateMonth" />
+    </div>
+    <div class="fg" id="fDatePeriodWrap" style="display:none">
+      <label>年月・時期</label>
+      <div style="display:flex;gap:6px">
+        <input type="month" id="fDatePeriodMonth" style="flex:1" />
+        <select id="fDatePeriodSub" style="flex:1">
+          <option value="early">上旬</option>
+          <option value="mid">中旬</option>
+          <option value="late">下旬</option>
+        </select>
+      </div>
     </div>
     <div class="fg">
       <label>ジャンル *</label>
@@ -504,7 +547,7 @@ let items = {};
 let year  = new Date().getFullYear();
 let month = new Date().getMonth();
 let activeGenres = new Set(['shokugan','gacha','figure']);
-let currentView  = 'cal';
+let currentView  = 'card';
 let isAdmin      = false;
 let editKey      = null;
 let selGenreVal  = 'shokugan';
@@ -554,16 +597,41 @@ window.setView = v => {
 window.prevMonth = () => { if(--month<0){month=11;year--;} render(); };
 window.nextMonth = () => { if(++month>11){month=0;year++;} render(); };
 
-// ── Render ──
+// ── Date helpers ──
+function formatDateLabel(v) {
+  // returns {day, label, sortKey}
+  const type = v.dateType || 'exact';
+  if (type === 'month') {
+    const [y,m] = (v.dateMonth||'').split('-');
+    return { day: m ? `${parseInt(m)}月` : '?', label: y ? `${y}年` : '', sortKey: v.dateMonth||'9999-99' };
+  }
+  if (type === 'period') {
+    const [y,m] = (v.datePeriodMonth||'').split('-');
+    const sub = { early:'上旬', mid:'中旬', late:'下旬' }[v.datePeriodSub]||'';
+    return { day: m ? `${parseInt(m)}月` : '?', label: y ? `${y}年 ${sub}` : sub, sortKey: v.datePeriodMonth||'9999-99' };
+  }
+  // exact
+  if (!v.date) return { day: '?', label: '', sortKey: '9999-99-99' };
+  const d = new Date(v.date+'T00:00:00');
+  return { day: `${d.getDate()}`, label: `${d.getFullYear()}年${d.getMonth()+1}月`, sortKey: v.date };
+}
+
+function sortKey(v) { return formatDateLabel(v).sortKey; }
+
 function filtered() {
   return Object.entries(items)
     .filter(([,v]) => activeGenres.has(v.genre))
-    .sort(([,a],[,b]) => a.date.localeCompare(b.date));
+    .sort(([,a],[,b]) => sortKey(a).localeCompare(sortKey(b)));
 }
 function thisMonth() {
   return filtered().filter(([,v]) => {
-    const d = new Date(v.date+'T00:00:00');
-    return d.getFullYear()===year && d.getMonth()===month;
+    const type = v.dateType||'exact';
+    let ym;
+    if(type==='exact') ym = (v.date||'').slice(0,7);
+    else if(type==='month') ym = v.dateMonth||'';
+    else ym = v.datePeriodMonth||'';
+    const target = `${year}-${String(month+1).padStart(2,'0')}`;
+    return ym === target;
   });
 }
 
@@ -593,7 +661,17 @@ function renderCal() {
   const last  = new Date(year,month+1,0).getDate();
   const today = new Date();
   const byDate = {};
-  thisMonth().forEach(([k,v])=>{ (byDate[v.date]=byDate[v.date]||[]).push([k,v]); });
+  thisMonth().forEach(([k,v])=>{
+    // vagueなものは月の1日に表示
+    let ds;
+    const type = v.dateType||'exact';
+    if(type==='exact') ds = v.date;
+    else {
+      const ym = type==='month' ? v.dateMonth : v.datePeriodMonth;
+      ds = ym ? ym+'-01' : null;
+    }
+    if(ds)(byDate[ds]=byDate[ds]||[]).push([k,v]);
+  });
 
   let h = dayLabels.map((d,i)=>`<div class="cal-head">${d}</div>`).join('');
   for(let i=0;i<first;i++){
@@ -629,13 +707,22 @@ function renderCard() {
   const tm = thisMonth();
   if(!tm.length){ document.getElementById('cardGrid').innerHTML='<div class="empty" style="grid-column:1/-1">この月の登録アイテムはありません</div>'; return; }
   document.getElementById('cardGrid').innerHTML = tm.map(([k,v])=>{
-    const d=new Date(v.date+'T00:00:00');
-    return `<div class="item-card" onclick="openDetail('${k}')" style="cursor:pointer">
-      ${imgTag(v,'card-img','card-img-placeholder')}
+    const dl = formatDateLabel(v);
+    const isVague = (v.dateType||'exact') !== 'exact';
+    const imgInner = v.img
+      ? `<img src="${v.img}" class="card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div class="card-img-placeholder" style="display:none">${GE[v.genre]}</div>`
+      : `<div class="card-img-placeholder">${GE[v.genre]}</div>`;
+    return `<div class="item-card" onclick="openDetail('${k}')">
+      <div class="card-img-wrap">
+        ${imgInner}
+        <div class="card-date-overlay">
+          <div class="card-date-day">${dl.day}</div>
+          <div class="card-date-label">${dl.label}</div>
+        </div>
+      </div>
       <div class="card-body">
         <div class="card-name">${v.name}</div>
-        <div class="card-date">${d.getMonth()+1}月${d.getDate()}日${v.note?` · ${v.note}`:''}</div>
-        <span class="card-badge" style="${GB[v.genre]}">${GL[v.genre]}</span>
+        <span class="card-badge" style="${GB[v.genre]}">${GL[v.genre]}</span>${isVague?`<span class="card-vague-badge">目安</span>`:''}
       </div>
     </div>`;
   }).join('');
@@ -645,12 +732,13 @@ function renderList() {
   const tm = thisMonth();
   if(!tm.length){ document.getElementById('listView').innerHTML='<div class="empty">この月の登録アイテムはありません</div>'; return; }
   document.getElementById('listView').innerHTML = tm.map(([k,v])=>{
-    const d=new Date(v.date+'T00:00:00');
+    const dl = formatDateLabel(v);
+    const isVague = (v.dateType||'exact') !== 'exact';
     return `<div class="list-item" onclick="openDetail('${k}')" style="cursor:pointer">
       ${imgTag(v,'list-thumb','list-thumb-ph')}
       <div class="list-info">
         <div class="list-name">${v.name}</div>
-        <div class="list-meta">${d.getMonth()+1}/${d.getDate()}${v.note?` · ${v.note}`:''}</div>
+        <div class="list-meta">${dl.label} ${dl.day}${isVague?' (目安)':''}${v.note?` · ${v.note}`:''}</div>
       </div>
       <span class="list-badge" style="${GB[v.genre]}">${GL[v.genre]}</span>
     </div>`;
@@ -683,15 +771,26 @@ function updateAdminUI(){
 }
 
 // ── Add/Edit ──
+window.updateDateFields = () => {
+  const t = document.getElementById('fDateType').value;
+  document.getElementById('fDateExactWrap').style.display  = t==='exact'  ? '' : 'none';
+  document.getElementById('fDateMonthWrap').style.display  = t==='month'  ? '' : 'none';
+  document.getElementById('fDatePeriodWrap').style.display = t==='period' ? '' : 'none';
+};
+
 window.openAdd = (prefillDate) => {
   editKey=null;
   document.getElementById('modalTitle').textContent='アイテムを追加';
   document.getElementById('fName').value='';
   document.getElementById('fDate').value=prefillDate||'';
+  document.getElementById('fDateMonth').value='';
+  document.getElementById('fDatePeriodMonth').value='';
+  document.getElementById('fDateType').value='exact';
   document.getElementById('fNote').value='';
   document.getElementById('fUrl').value='';
   document.getElementById('fImg').value='';
   document.getElementById('imgPreview').classList.remove('show');
+  updateDateFields();
   selGenre('shokugan');
   document.getElementById('itemModal').classList.add('open');
   setTimeout(()=>document.getElementById('fName').focus(),100);
@@ -701,7 +800,13 @@ window.openEdit = k => {
   editKey=k;
   document.getElementById('modalTitle').textContent='アイテムを編集';
   document.getElementById('fName').value=v.name;
-  document.getElementById('fDate').value=v.date;
+  const type = v.dateType||'exact';
+  document.getElementById('fDateType').value=type;
+  document.getElementById('fDate').value=v.date||'';
+  document.getElementById('fDateMonth').value=v.dateMonth||'';
+  document.getElementById('fDatePeriodMonth').value=v.datePeriodMonth||'';
+  document.getElementById('fDatePeriodSub').value=v.datePeriodSub||'early';
+  updateDateFields();
   document.getElementById('fNote').value=v.note||'';
   document.getElementById('fUrl').value=v.url||'';
   document.getElementById('fImg').value=v.img||'';
@@ -720,26 +825,28 @@ window.previewImg = () => {
 };
 window.saveItem = () => {
   const name=document.getElementById('fName').value.trim();
-  const date=document.getElementById('fDate').value;
-  if(!name||!date){ alert('商品名と発売日は必須です'); return; }
+  const dateType=document.getElementById('fDateType').value;
+  let date='', dateMonth='', datePeriodMonth='', datePeriodSub='';
+  if(dateType==='exact') { date=document.getElementById('fDate').value; if(!date){alert('発売日を入力してください');return;} }
+  else if(dateType==='month') { dateMonth=document.getElementById('fDateMonth').value; if(!dateMonth){alert('年月を入力してください');return;} }
+  else { datePeriodMonth=document.getElementById('fDatePeriodMonth').value; datePeriodSub=document.getElementById('fDatePeriodSub').value; if(!datePeriodMonth){alert('年月を入力してください');return;} }
+  if(!name){alert('商品名を入力してください');return;}
   const data={
-    name, date, genre:selGenreVal,
+    name, dateType, date, dateMonth, datePeriodMonth, datePeriodSub,
+    genre:selGenreVal,
     note:document.getElementById('fNote').value.trim(),
     url: document.getElementById('fUrl').value.trim(),
     img: document.getElementById('fImg').value.trim(),
     adminKey: ADMIN_PASSWORD,
     updatedAt: Date.now()
   };
-  const p = editKey
-    ? set(ref(db,'items/'+editKey), data)
-    : push(itemsRef, data);
+  const p = editKey ? set(ref(db,'items/'+editKey), data) : push(itemsRef, data);
   p.then(()=>{
     closeModal('itemModal');
-    const d=new Date(date+'T00:00:00');
-    year=d.getFullYear(); month=d.getMonth();
-  }).catch(err=>{
-    alert('保存に失敗しました。Firebaseのルール設定を確認してください。\n'+err.message);
-  });
+    // 表示月をその月に移動
+    const ym = date ? date.slice(0,7) : (dateMonth||datePeriodMonth);
+    if(ym) { const [y,m]=ym.split('-'); year=parseInt(y); month=parseInt(m)-1; }
+  }).catch(err=>{ alert('保存に失敗しました。\n'+err.message); });
 };
 window.delItem = k => {
   if(!confirm('削除しますか？')) return;
@@ -752,8 +859,9 @@ window.delItem = k => {
 
 window.openDetail = k => {
   const v = items[k]; if(!v) return;
-  const d = new Date(v.date+'T00:00:00');
-  const dateStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  const dl = formatDateLabel(v);
+  const isVague = (v.dateType||'exact') !== 'exact';
+  const dateStr = `${dl.label} ${dl.day}${isVague?' (目安)':''}`;
   document.getElementById('detailImgWrap').innerHTML = v.img
     ? `<img src="${v.img}" class="detail-img" onerror="this.outerHTML='<div class=detail-img-ph>${GE[v.genre]}</div>'" />`
     : `<div class="detail-img-ph">${GE[v.genre]}</div>`;
