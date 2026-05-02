@@ -68,15 +68,24 @@ body {
 
 /* ── Header ── */
 .header {
-  position: absolute; top: 12px; right: 16px; z-index: 50;
-  display: flex; align-items: center; gap: 8px;
+  position: fixed; bottom: 20px; right: 20px; z-index: 50;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
 }
+.admin-fab {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--border2);
+  box-shadow: var(--shadow-lg); display: flex; align-items: center;
+  justify-content: center; font-size: 20px; cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.admin-fab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+.admin-fab.active { background: var(--accent); }
 
 /* Admin badge */
 .admin-badge {
-  font-size: 11px; font-weight: 700; padding: 3px 10px;
+  font-size: 11px; font-weight: 700; padding: 4px 10px;
   border-radius: 99px; background: var(--accent); color: white;
-  display: none;
+  display: none; white-space: nowrap;
 }
 .admin-badge.show { display: inline-block; }
 
@@ -156,12 +165,18 @@ body {
 }
 .vbtn.on { background: var(--bg2); color: var(--text); }
 
-/* Stats chips */
-.stats-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
-.stat-chip {
-  font-size: 12px; padding: 4px 11px; border-radius: 99px;
-  background: var(--surface); color: var(--text2);
-  border: 1px solid var(--border); font-weight: 500;
+/* Stats text */
+.stats-row {
+  display: flex; gap: 4px 12px; flex-wrap: wrap;
+  margin-bottom: 0.75rem; margin-top: 4px;
+  font-size: 12px; color: var(--text2); align-items: center;
+}
+.stats-row .stat-sep { color: var(--border2); }
+
+/* Filters row */
+.filters-row {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.2rem;
+  justify-content: center;
 }
 
 /* ── Calendar ── */
@@ -415,9 +430,9 @@ body {
 
 <!-- Header -->
 <header class="header">
+  <button class="btn btn-sm btn-accent" id="addBtn" onclick="openAdd()" style="display:none;border-radius:99px;padding:6px 14px">＋ 追加</button>
   <span class="admin-badge" id="adminBadge">管理者モード</span>
-  <button class="btn btn-sm" id="adminBtn" onclick="toggleAdmin()">管理者</button>
-  <button class="btn btn-sm btn-accent" id="addBtn" onclick="openAdd()" style="display:none">＋ 追加</button>
+  <div class="admin-fab" id="adminBtn" onclick="toggleAdmin()" title="管理者">✏️</div>
 </header>
 
 <!-- App -->
@@ -436,13 +451,13 @@ body {
     <span class="pill pill-ichiban" data-g="ichiban" onclick="toggleGenre('ichiban')">🎀 一番くじ</span>
   </div>
 
-  <!-- Stats -->
-  <div class="stats-row" id="statsRow"></div>
-
   <!-- Nav -->
   <div class="nav-row">
     <div class="nav-arrow" onclick="prevMonth()">‹</div>
-    <div class="month-title" id="monthTitle"></div>
+    <div style="flex:1;text-align:center">
+      <div class="month-title" id="monthTitle"></div>
+      <div class="stats-row" id="statsRow"></div>
+    </div>
     <div class="nav-arrow" onclick="nextMonth()">›</div>
     <div class="view-toggle">
       <button class="vbtn" id="vCal" onclick="setView('cal')">📅</button>
@@ -715,12 +730,13 @@ function renderStats() {
   const tm = thisMonth();
   const cnt = {shokugan:0,gacha:0,figure:0,ichiban:0};
   tm.forEach(([,v])=>{ if(cnt[v.genre]!==undefined) cnt[v.genre]++; });
+  const parts = [`全${tm.length}件`];
+  if(cnt.shokugan) parts.push(`🍬 食玩 ${cnt.shokugan}`);
+  if(cnt.gacha)    parts.push(`🎰 ガチャ ${cnt.gacha}`);
+  if(cnt.figure)   parts.push(`🗿 フィギュア ${cnt.figure}`);
+  if(cnt.ichiban)  parts.push(`🎀 一番くじ ${cnt.ichiban}`);
   document.getElementById('statsRow').innerHTML =
-    `<span class="stat-chip">この月 ${tm.length}件</span>` +
-    (cnt.shokugan?`<span class="stat-chip">🍬 食玩 ${cnt.shokugan}</span>`:'') +
-    (cnt.gacha   ?`<span class="stat-chip">🎰 ガチャ ${cnt.gacha}</span>`:'') +
-    (cnt.figure  ?`<span class="stat-chip">🗿 フィギュア ${cnt.figure}</span>`:'') +
-    (cnt.ichiban ?`<span class="stat-chip">🎀 一番くじ ${cnt.ichiban}</span>`:'');
+    parts.map((p,i) => i===0 ? `<span>${p}</span>` : `<span class="stat-sep">·</span><span>${p}</span>`).join('');
 }
 
 function renderCal() {
@@ -833,9 +849,9 @@ window.doLogin = () => {
 };
 function updateAdminUI(){
   document.getElementById('adminBadge').classList.toggle('show',isAdmin);
-  document.getElementById('adminBtn').textContent=isAdmin?'ログアウト':'管理者';
+  document.getElementById('adminBtn').classList.toggle('active',isAdmin);
+  document.getElementById('adminBtn').textContent = isAdmin ? '✕' : '✏️';
   document.getElementById('addBtn').style.display=isAdmin?'':'none';
-
   render();
 }
 
