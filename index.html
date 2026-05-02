@@ -63,30 +63,14 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  position: relative;
 }
 
 /* ── Header ── */
 .header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 1.5rem;
-  position: sticky; top: 0; z-index: 50;
+  position: absolute; top: 12px; right: 16px; z-index: 50;
+  display: flex; align-items: center; gap: 8px;
 }
-.header-inner {
-  max-width: 960px; margin: 0 auto;
-  display: flex; align-items: center; gap: 12px;
-  height: 58px;
-}
-.logo {
-  font-family: 'Poppins', sans-serif;
-  font-size: 18px; font-weight: 700;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
-}
-.logo span { font-size: 20px; }
-.header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 
 /* Admin badge */
 .admin-badge {
@@ -406,20 +390,18 @@ body {
 
 <!-- Header -->
 <header class="header">
-  <div class="header-inner">
-    <div class="logo">
-      <img src="logo.png" alt="CandyToys" style="height:38px;width:auto;object-fit:contain;" />
-    </div>
-    <div class="header-right">
-      <span class="admin-badge" id="adminBadge">管理者モード</span>
-      <button class="btn btn-sm" id="adminBtn" onclick="toggleAdmin()">管理者</button>
-      <button class="btn btn-sm btn-accent" id="addBtn" onclick="openAdd()" style="display:none">＋ 追加</button>
-    </div>
-  </div>
+  <span class="admin-badge" id="adminBadge">管理者モード</span>
+  <button class="btn btn-sm" id="adminBtn" onclick="toggleAdmin()">管理者</button>
+  <button class="btn btn-sm btn-accent" id="addBtn" onclick="openAdd()" style="display:none">＋ 追加</button>
 </header>
 
 <!-- App -->
 <div class="app">
+
+  <!-- Logo hero -->
+  <div style="text-align:center; padding: 2rem 0 1rem;">
+    <img src="logo.png" alt="CandyToys" style="width: min(320px, 70vw); height: auto;" />
+  </div>
   <!-- Filters -->
   <div class="filters-row">
     <span class="pill pill-all" data-g="all" onclick="toggleGenre('all')">すべて</span>
