@@ -3,7 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>食玩・ガチャ 発売カレンダー</title>
+<title>CandyToys - 食玩・ガチャ 発売カレンダー</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<meta property="og:title" content="CandyToys - 食玩・ガチャ 発売カレンダー">
+<meta property="og:description" content="食玩・ガチャガチャ・フィギュア・一番くじの発売情報カレンダー">
+<meta property="og:image" content="https://somori.github.io/candyToys/logo.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://somori.github.io/candyToys/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://somori.github.io/candyToys/logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,6 +40,8 @@
   --gacha-dark: #0a4a33;
   --figure: #93c4f0;
   --figure-dark: #0a3560;
+  --ichiban: #f0b0d8;
+  --ichiban-dark: #6a0040;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -118,6 +129,21 @@ body {
 .pill-shokugan { background: var(--shokugan); color: var(--shokugan-dark); }
 .pill-gacha    { background: var(--gacha);    color: var(--gacha-dark); }
 .pill-figure   { background: var(--figure);   color: var(--figure-dark); }
+.pill-ichiban  { background: var(--ichiban);  color: var(--ichiban-dark); }
+
+/* Notification toast */
+.notif-toast {
+  position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+  background: var(--text); color: var(--bg); border-radius: var(--radius-lg);
+  padding: 12px 20px; font-size: 14px; font-weight: 500; z-index: 300;
+  box-shadow: var(--shadow-lg); max-width: 90vw; text-align: center;
+  animation: toastIn 0.25s ease;
+}
+@keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(-10px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+.notif-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); margin-right: 6px; vertical-align: middle;
+}
 
 /* Nav */
 .nav-row {
@@ -184,6 +210,7 @@ body {
 .chip-shokugan { background: var(--shokugan); color: var(--shokugan-dark); }
 .chip-gacha    { background: var(--gacha);    color: var(--gacha-dark); }
 .chip-figure   { background: var(--figure);   color: var(--figure-dark); }
+.chip-ichiban  { background: var(--ichiban);  color: var(--ichiban-dark); }
 .chip-more { font-size: 10px; color: var(--text3); padding-left: 3px; font-weight: 500; }
 
 /* ── Card Grid (image view) ── */
@@ -307,6 +334,7 @@ body {
 .go-shokugan { background: var(--shokugan); color: var(--shokugan-dark); border-color: #d4933a; }
 .go-gacha    { background: var(--gacha);    color: var(--gacha-dark);    border-color: #2aaa7a; }
 .go-figure   { background: var(--figure);   color: var(--figure-dark);   border-color: #4a9ae0; }
+.go-ichiban  { background: var(--ichiban);  color: var(--ichiban-dark);  border-color: #d070a8; }
 .img-preview {
   width: 100%; max-height: 120px; object-fit: cover; border-radius: var(--radius);
   margin-top: 6px; display: none; border: 1px solid var(--border);
@@ -365,14 +393,23 @@ body {
 
 <!-- Loading -->
 <div class="loading-overlay" id="loadingOverlay">
-  <span class="spinner"></span>
-  <p>読み込み中...</p>
+  <img src="logo.png" alt="CandyToys" style="width:180px;height:auto;animation:logoFloat 1.5s ease-in-out infinite alternate;" />
+  <p style="margin-top:8px">読み込み中...</p>
 </div>
+
+<style>
+@keyframes logoFloat {
+  from { transform: translateY(0px); }
+  to   { transform: translateY(-10px); }
+}
+</style>
 
 <!-- Header -->
 <header class="header">
   <div class="header-inner">
-    <div class="logo"><span>🎲</span> CandyToys</div>
+    <div class="logo">
+      <img src="logo.png" alt="CandyToys" style="height:38px;width:auto;object-fit:contain;" />
+    </div>
     <div class="header-right">
       <span class="admin-badge" id="adminBadge">管理者モード</span>
       <button class="btn btn-sm" id="adminBtn" onclick="toggleAdmin()">管理者</button>
@@ -389,6 +426,7 @@ body {
     <span class="pill pill-shokugan" data-g="shokugan" onclick="toggleGenre('shokugan')">🍬 食玩</span>
     <span class="pill pill-gacha" data-g="gacha" onclick="toggleGenre('gacha')">🎰 ガチャガチャ</span>
     <span class="pill pill-figure" data-g="figure" onclick="toggleGenre('figure')">🗿 フィギュア</span>
+    <span class="pill pill-ichiban" data-g="ichiban" onclick="toggleGenre('ichiban')">🎀 一番くじ</span>
   </div>
 
   <!-- Stats -->
@@ -463,16 +501,21 @@ body {
     </div>
     <div class="fg">
       <label>ジャンル *</label>
-      <div class="genre-grid">
+      <div class="genre-grid" style="grid-template-columns:repeat(2,1fr)">
         <button class="go go-shokugan on" data-g="shokugan" onclick="selGenre('shokugan')">🍬 食玩</button>
         <button class="go go-gacha" data-g="gacha" onclick="selGenre('gacha')">🎰 ガチャ</button>
         <button class="go go-figure" data-g="figure" onclick="selGenre('figure')">🗿 フィギュア</button>
+        <button class="go go-ichiban" data-g="ichiban" onclick="selGenre('ichiban')">🎀 一番くじ</button>
       </div>
     </div>
     <div class="fg">
       <label>画像URL（任意）</label>
       <input type="text" id="fImg" placeholder="https://..." oninput="previewImg()" />
       <img id="imgPreview" class="img-preview" />
+    </div>
+    <div class="fg">
+      <label>値段（任意）</label>
+      <input type="text" id="fPrice" placeholder="例：200円、ガチャ1回300円、A賞3,000円" />
     </div>
     <div class="fg">
       <label>メモ（任意）</label>
@@ -524,7 +567,7 @@ import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstati
 // ============================================================
 // 🔧 設定：あとでここを書き換えてください
 // ============================================================
-const ADMIN_PASSWORD = "Hello!2015!"; // ← ここをあなたのパスワードに変更
+const ADMIN_PASSWORD = "YOUR_PASSWORD"; // ← ここをあなたのパスワードに変更
 
 const firebaseConfig = {
   apiKey: "AIzaSyDZLsBsHzv_CzWloLdiUahoFdny324DOME",
@@ -546,35 +589,38 @@ const itemsRef = ref(db, 'items');
 let items = {};
 let year  = new Date().getFullYear();
 let month = new Date().getMonth();
-let activeGenres = new Set(['shokugan','gacha','figure']);
+let activeGenres = new Set(['shokugan','gacha','figure','ichiban']);
 let currentView  = 'card';
 let isAdmin      = false;
 let editKey      = null;
 let selGenreVal  = 'shokugan';
 
 // ── Helpers ──
-const GL = { shokugan:'食玩', gacha:'ガチャ', figure:'フィギュア' };
-const GE = { shokugan:'🍬', gacha:'🎰', figure:'🗿' };
-const GC = { shokugan:'chip-shokugan', gacha:'chip-gacha', figure:'chip-figure' };
+const GL = { shokugan:'食玩', gacha:'ガチャ', figure:'フィギュア', ichiban:'一番くじ' };
+const GE = { shokugan:'🍬', gacha:'🎰', figure:'🗿', ichiban:'🎀' };
+const GC = { shokugan:'chip-shokugan', gacha:'chip-gacha', figure:'chip-figure', ichiban:'chip-ichiban' };
 const GB = { shokugan:`background:var(--shokugan);color:var(--shokugan-dark)`,
              gacha:   `background:var(--gacha);color:var(--gacha-dark)`,
-             figure:  `background:var(--figure);color:var(--figure-dark)` };
+             figure:  `background:var(--figure);color:var(--figure-dark)`,
+             ichiban: `background:var(--ichiban);color:var(--ichiban-dark)` };
 
 // ── Firebase realtime listener ──
 onValue(itemsRef, snap => {
   items = snap.val() || {};
   document.getElementById('loadingOverlay').style.display = 'none';
   render();
+  checkNotifications();
 });
 
 // ── Genre toggle ──
+const ALL_GENRES = ['shokugan','gacha','figure','ichiban'];
+
 window.toggleGenre = g => {
   if (g === 'all') {
-    activeGenres = new Set(['shokugan','gacha','figure']);
+    activeGenres = new Set(ALL_GENRES);
   } else {
-    // すでにそれ1つだけ選択中なら全部に戻す
     if (activeGenres.size === 1 && activeGenres.has(g)) {
-      activeGenres = new Set(['shokugan','gacha','figure']);
+      activeGenres = new Set(ALL_GENRES);
     } else {
       activeGenres = new Set([g]);
     }
@@ -584,14 +630,8 @@ window.toggleGenre = g => {
 function updatePills() {
   document.querySelectorAll('[data-g]').forEach(p => {
     const g = p.dataset.g;
-    const on = g === 'all' ? activeGenres.size === 3 : (activeGenres.size === 1 && activeGenres.has(g));
-    p.classList.toggle('off', !on && !(g === 'all' && activeGenres.size === 3));
-  });
-  // すべてボタンは全選択時だけon、個別は該当のみon
-  document.querySelectorAll('[data-g]').forEach(p => {
-    const g = p.dataset.g;
     if (g === 'all') {
-      p.classList.toggle('off', activeGenres.size !== 3);
+      p.classList.toggle('off', activeGenres.size !== ALL_GENRES.length);
     } else {
       p.classList.toggle('off', !(activeGenres.size === 1 && activeGenres.has(g)));
     }
@@ -660,13 +700,14 @@ function render() {
 
 function renderStats() {
   const tm = thisMonth();
-  const cnt = {shokugan:0,gacha:0,figure:0};
-  tm.forEach(([,v])=>cnt[v.genre]++);
+  const cnt = {shokugan:0,gacha:0,figure:0,ichiban:0};
+  tm.forEach(([,v])=>{ if(cnt[v.genre]!==undefined) cnt[v.genre]++; });
   document.getElementById('statsRow').innerHTML =
     `<span class="stat-chip">この月 ${tm.length}件</span>` +
     (cnt.shokugan?`<span class="stat-chip">🍬 食玩 ${cnt.shokugan}</span>`:'') +
     (cnt.gacha   ?`<span class="stat-chip">🎰 ガチャ ${cnt.gacha}</span>`:'') +
-    (cnt.figure  ?`<span class="stat-chip">🗿 フィギュア ${cnt.figure}</span>`:'');
+    (cnt.figure  ?`<span class="stat-chip">🗿 フィギュア ${cnt.figure}</span>`:'') +
+    (cnt.ichiban ?`<span class="stat-chip">🎀 一番くじ ${cnt.ichiban}</span>`:'');
 }
 
 function renderCal() {
@@ -736,6 +777,7 @@ function renderCard() {
       </div>
       <div class="card-body">
         <div class="card-name">${v.name}</div>
+        ${v.price?`<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">💴 ${v.price}</div>`:''}
         <span class="card-badge" style="${GB[v.genre]}">${GL[v.genre]}</span>${isVague?`<span class="card-vague-badge">目安</span>`:''}
       </div>
     </div>`;
@@ -752,7 +794,7 @@ function renderList() {
       ${imgTag(v,'list-thumb','list-thumb-ph')}
       <div class="list-info">
         <div class="list-name">${v.name}</div>
-        <div class="list-meta">${dl.label} ${dl.day}${isVague?' (目安)':''}${v.note?` · ${v.note}`:''}</div>
+        <div class="list-meta">${dl.label} ${dl.day}${isVague?' (目安)':''}${v.price?` · 💴${v.price}`:''}${v.note?` · ${v.note}`:''}</div>
       </div>
       <span class="list-badge" style="${GB[v.genre]}">${GL[v.genre]}</span>
     </div>`;
@@ -801,6 +843,7 @@ window.openAdd = (prefillDate) => {
   document.getElementById('fDatePeriodMonth').value='';
   document.getElementById('fDateType').value='exact';
   document.getElementById('fNote').value='';
+  document.getElementById('fPrice').value='';
   document.getElementById('fUrl').value='';
   document.getElementById('fImg').value='';
   document.getElementById('imgPreview').classList.remove('show');
@@ -822,6 +865,7 @@ window.openEdit = k => {
   document.getElementById('fDatePeriodSub').value=v.datePeriodSub||'early';
   updateDateFields();
   document.getElementById('fNote').value=v.note||'';
+  document.getElementById('fPrice').value=v.price||'';
   document.getElementById('fUrl').value=v.url||'';
   document.getElementById('fImg').value=v.img||'';
   previewImg();
@@ -848,6 +892,7 @@ window.saveItem = () => {
   const data={
     name, dateType, date, dateMonth, datePeriodMonth, datePeriodSub,
     genre:selGenreVal,
+    price:document.getElementById('fPrice').value.trim(),
     note:document.getElementById('fNote').value.trim(),
     url: document.getElementById('fUrl').value.trim(),
     img: document.getElementById('fImg').value.trim(),
@@ -883,7 +928,7 @@ window.openDetail = k => {
   document.getElementById('detailBadge').textContent = GL[v.genre];
   document.getElementById('detailBadge').style = GB[v.genre];
   document.getElementById('detailDate').textContent = dateStr;
-  document.getElementById('detailNote').textContent = v.note||'';
+  document.getElementById('detailNote').textContent = [v.price?`💴 ${v.price}`:'', v.note||''].filter(Boolean).join(' · ');
   const acts = [];
   if(v.url) acts.push(`<a href="${v.url}" target="_blank" class="btn btn-accent btn-sm">🔗 商品ページを開く</a>`);
   if(isAdmin) {
@@ -900,6 +945,61 @@ window.openDetail = k => {
 window.closeModal = id => document.getElementById(id).classList.remove('open');
 window.bgClick = (e,id) => { if(e.target===document.getElementById(id)) closeModal(id); };
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeModal('itemModal'); closeModal('loginModal'); closeModal('detailModal'); } });
+
+// ── Notifications ──
+async function checkNotifications() {
+  if (!('Notification' in window)) return;
+  // 通知許可をリクエスト
+  if (Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+  if (Notification.permission !== 'granted') return;
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const tomorrowDate = new Date(today); tomorrowDate.setDate(today.getDate()+1);
+  const tomorrowStr = `${tomorrowDate.getFullYear()}-${String(tomorrowDate.getMonth()+1).padStart(2,'0')}-${String(tomorrowDate.getDate()).padStart(2,'0')}`;
+
+  // 今日・明日発売のものを探す（exactのみ）
+  const todayItems = [], tomorrowItems = [];
+  Object.values(items).forEach(v => {
+    if ((v.dateType||'exact') !== 'exact') return;
+    if (v.date === todayStr) todayItems.push(v);
+    if (v.date === tomorrowStr) tomorrowItems.push(v);
+  });
+
+  // 同日に複数回通知しないようにlocalStorageでチェック
+  const notifKey = 'notif_last_' + todayStr;
+  if (localStorage.getItem(notifKey)) return;
+  localStorage.setItem(notifKey, '1');
+
+  if (todayItems.length > 0) {
+    const names = todayItems.map(v=>v.name).join('、');
+    new Notification('🎉 本日発売！', {
+      body: names,
+      icon: 'https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/72x72/1f3b2.png'
+    });
+  }
+  if (tomorrowItems.length > 0) {
+    const names = tomorrowItems.map(v=>v.name).join('、');
+    new Notification('📅 明日発売！', {
+      body: names,
+      icon: 'https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/72x72/1f4c5.png'
+    });
+  }
+
+  // トースト表示（通知と別に画面内にも出す）
+  const toastItems = [...todayItems.map(v=>`🎉 本日発売：${v.name}`), ...tomorrowItems.map(v=>`📅 明日発売：${v.name}`)];
+  if (toastItems.length > 0) showToast(toastItems.join('\n'));
+}
+
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.className = 'notif-toast';
+  el.innerHTML = `<span class="notif-dot"></span>${msg.replace(/\n/g,'<br>')}`;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 5000);
+}
 
 // init pills
 updatePills();
