@@ -109,22 +109,41 @@ body {
 /* ── App body ── */
 .app { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
 
-/* Genre filters */
-.filters-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.2rem; }
-.pill {
-  padding: 5px 14px; border-radius: 99px; font-size: 12px; font-weight: 700;
-  cursor: pointer; border: 2px solid transparent; transition: opacity 0.15s, transform 0.1s;
-  user-select: none; letter-spacing: 0.3px;
+/* ── Genre tabs ── */
+.genre-tabs {
+  display: flex; gap: 0; margin-bottom: 1.2rem;
+  background: var(--bg2); border-radius: var(--radius-lg); padding: 4px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
-.pill:active { transform: scale(0.95); }
-.pill.off { opacity: 0.3; }
-.pill-all { background: var(--bg3); color: var(--text2); border-color: var(--border2); }
-.pill-shokugan { background: var(--shokugan); color: var(--shokugan-dark); }
-.pill-gacha    { background: var(--gacha);    color: var(--gacha-dark); }
-.pill-figure   { background: var(--figure);   color: var(--figure-dark); }
-.pill-ichiban  { background: var(--ichiban);  color: var(--ichiban-dark); }
-.pill-fav { background: #fff0c0; color: #7a5a00; border: 2px solid #e8c840; }
-.pill-fav.on { background: #f5d020; color: #5a3c00; }
+.genre-tabs::-webkit-scrollbar { display: none; }
+.gtab {
+  flex: 1; min-width: fit-content; padding: 7px 12px;
+  border-radius: var(--radius); font-size: 12px; font-weight: 700;
+  cursor: pointer; border: none; background: none; color: var(--text2);
+  transition: all 0.15s; white-space: nowrap; font-family: inherit;
+  text-align: center;
+}
+.gtab.on {
+  background: var(--surface); color: var(--text);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.gtab-shokugan.on { background: var(--shokugan); color: var(--shokugan-dark); }
+.gtab-gacha.on    { background: var(--gacha);    color: var(--gacha-dark); }
+.gtab-figure.on   { background: var(--figure);   color: var(--figure-dark); }
+.gtab-ichiban.on  { background: var(--ichiban);  color: var(--ichiban-dark); }
+.gtab-fav.on      { background: #f5d020;         color: #5a3c00; }
+
+/* View tabs */
+.view-tabs {
+  display: flex; background: var(--bg2); border-radius: var(--radius-lg); padding: 3px;
+}
+.vtab {
+  flex: 1; padding: 5px 10px; border-radius: var(--radius); font-size: 12px;
+  font-weight: 700; cursor: pointer; border: none; background: none;
+  color: var(--text2); transition: all 0.15s; font-family: inherit; text-align: center;
+}
+.vtab.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
 
 /* Fav button in detail */
 .fav-btn {
@@ -164,17 +183,6 @@ body {
   font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 700;
   letter-spacing: -0.5px;
 }
-.view-toggle {
-  display: flex; border: 1px solid var(--border2); border-radius: var(--radius);
-  overflow: hidden; background: var(--surface);
-}
-.vbtn {
-  background: none; border: none; padding: 6px 12px; cursor: pointer;
-  font-size: 12px; color: var(--text2); font-family: inherit; font-weight: 500;
-  transition: background 0.12s;
-}
-.vbtn.on { background: var(--bg2); color: var(--text); }
-
 /* Stats text */
 .stats-row {
   display: flex; gap: 4px 8px; flex-wrap: wrap;
@@ -463,14 +471,14 @@ body {
   <div style="text-align:center; padding: 2rem 0 1rem;">
     <img src="logo.png" alt="CandyToys" style="width: min(320px, 70vw); height: auto;" />
   </div>
-  <!-- Filters -->
-  <div class="filters-row">
-    <span class="pill pill-all" data-g="all" onclick="toggleGenre('all')">すべて</span>
-    <span class="pill pill-shokugan" data-g="shokugan" onclick="toggleGenre('shokugan')">🍬 食玩</span>
-    <span class="pill pill-gacha" data-g="gacha" onclick="toggleGenre('gacha')">🎰 ガチャガチャ</span>
-    <span class="pill pill-figure" data-g="figure" onclick="toggleGenre('figure')">🗿 フィギュア</span>
-    <span class="pill pill-ichiban" data-g="ichiban" onclick="toggleGenre('ichiban')">🎀 一番くじ</span>
-    <span class="pill pill-fav" data-g="fav" onclick="toggleFav()">⭐ ほしい！</span>
+  <!-- Genre tabs -->
+  <div class="genre-tabs">
+    <button class="gtab on"            data-g="all"      onclick="toggleGenre('all')">すべて</button>
+    <button class="gtab gtab-shokugan" data-g="shokugan" onclick="toggleGenre('shokugan')">🍬 食玩</button>
+    <button class="gtab gtab-gacha"    data-g="gacha"    onclick="toggleGenre('gacha')">🎰 ガチャ</button>
+    <button class="gtab gtab-figure"   data-g="figure"   onclick="toggleGenre('figure')">🗿 フィギュア</button>
+    <button class="gtab gtab-ichiban"  data-g="ichiban"  onclick="toggleGenre('ichiban')">🎀 一番くじ</button>
+    <button class="gtab gtab-fav"      data-g="fav"      onclick="toggleFav()">⭐ ほしい！</button>
   </div>
 
   <!-- Nav -->
@@ -480,10 +488,10 @@ body {
       <div class="month-title" id="monthTitle"></div>
     </div>
     <div class="nav-arrow" onclick="nextMonth()">›</div>
-    <div class="view-toggle">
-      <button class="vbtn" id="vCal" onclick="setView('cal')">📅</button>
-      <button class="vbtn on" id="vCard" onclick="setView('card')">🖼</button>
-      <button class="vbtn" id="vList" onclick="setView('list')">📋</button>
+    <div class="view-tabs">
+      <button class="vtab" id="vCal"  onclick="setView('cal')">📅 カレンダー</button>
+      <button class="vtab on" id="vCard" onclick="setView('card')">🖼 カード</button>
+      <button class="vtab" id="vList" onclick="setView('list')">📋 リスト</button>
     </div>
   </div>
 
@@ -688,6 +696,7 @@ window.toggleFav = () => {
 };
 
 window.toggleGenre = g => {
+  favMode = false;
   if (g === 'all') {
     activeGenres = new Set(ALL_GENRES);
   } else {
@@ -703,9 +712,11 @@ function updatePills() {
   document.querySelectorAll('[data-g]').forEach(p => {
     const g = p.dataset.g;
     if (g === 'all') {
-      p.classList.toggle('off', activeGenres.size !== ALL_GENRES.length);
+      p.classList.toggle('on', activeGenres.size === ALL_GENRES.length && !favMode);
+    } else if (g === 'fav') {
+      p.classList.toggle('on', favMode);
     } else {
-      p.classList.toggle('off', !(activeGenres.size === 1 && activeGenres.has(g)));
+      p.classList.toggle('on', activeGenres.size === 1 && activeGenres.has(g) && !favMode);
     }
   });
 }
@@ -850,7 +861,7 @@ function renderCard() {
           <div class="card-date-day">${dl.day}</div>
           <div class="card-date-label">${dl.label}</div>
         </div>
-        ${faved?`<div style="position:absolute;top:6px;right:6px;font-size:16px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.4))">★</div>`:''}
+        ${faved?`<div style="position:absolute;top:6px;right:6px;font-size:18px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3))">⭐</div>`:''}
       </div>
       <div class="card-body">
         <div class="card-name">${v.name}</div>
