@@ -489,9 +489,9 @@ body {
     </div>
     <div class="nav-arrow" onclick="nextMonth()">›</div>
     <div class="view-tabs">
-      <button class="vtab" id="vCal"  onclick="setView('cal')">📅 カレンダー</button>
-      <button class="vtab on" id="vCard" onclick="setView('card')">🖼 カード</button>
-      <button class="vtab" id="vList" onclick="setView('list')">📋 リスト</button>
+      <button class="vtab" id="vCal"  onclick="setView('cal')">📅</button>
+      <button class="vtab on" id="vCard" onclick="setView('card')">🖼</button>
+      <button class="vtab" id="vList" onclick="setView('list')">📋</button>
     </div>
   </div>
 
@@ -1170,7 +1170,7 @@ window.clickFav = k => {
   const faved = isFav(k);
   const btn = document.getElementById('favBtn');
   if(btn){ btn.textContent = faved ? '⭐ ほしい！済' : '⭐ ほしい！'; btn.classList.toggle('on', faved); }
-  if(favMode) render(); // favモード中なら再描画
+  render(); // カード即時反映
 };
 
 // ── Modal helpers ──
