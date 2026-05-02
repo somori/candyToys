@@ -123,6 +123,16 @@ body {
 .pill-gacha    { background: var(--gacha);    color: var(--gacha-dark); }
 .pill-figure   { background: var(--figure);   color: var(--figure-dark); }
 .pill-ichiban  { background: var(--ichiban);  color: var(--ichiban-dark); }
+.pill-fav { background: #fff0c0; color: #7a5a00; border: 2px solid #e8c840; }
+.pill-fav.on { background: #f5d020; color: #5a3c00; }
+
+/* Fav button in detail */
+.fav-btn {
+  background: none; border: 1.5px solid var(--border2); border-radius: var(--radius);
+  padding: 6px 14px; font-size: 15px; cursor: pointer; font-family: inherit;
+  transition: all 0.15s; color: var(--text2);
+}
+.fav-btn.on { background: #fff0c0; border-color: #e8c840; color: #7a5a00; }
 
 /* Notification toast */
 .notif-toast {
@@ -167,11 +177,12 @@ body {
 
 /* Stats text */
 .stats-row {
-  display: flex; gap: 4px 10px; flex-wrap: wrap;
+  display: flex; gap: 4px 8px; flex-wrap: wrap;
   margin-bottom: 1rem;
   font-size: 12px; color: var(--text2); align-items: center;
+  justify-content: flex-start;
 }
-.stats-row .stat-sep { color: var(--border2); }
+.stats-row .stat-sep { color: var(--border2); margin: 0 2px; }
 
 /* Filters row */
 .filters-row {
@@ -393,8 +404,8 @@ body {
   border: 1px solid var(--border2); width: min(420px, 100%);
   box-shadow: var(--shadow-lg); animation: slideUp 0.2s ease; overflow: hidden;
 }
-.detail-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: var(--bg2); display: block; }
-.detail-img-ph { width: 100%; aspect-ratio: 16/9; background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 64px; }
+.detail-img { width: 100%; max-height: 60vh; object-fit: contain; background: var(--bg2); display: block; padding: 8px; }
+.detail-img-ph { width: 100%; aspect-ratio: 1; background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 64px; }
 .detail-body { padding: 1.25rem 1.5rem 1.5rem; }
 .detail-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; line-height: 1.4; }
 .detail-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; align-items: center; }
@@ -449,6 +460,7 @@ body {
     <span class="pill pill-gacha" data-g="gacha" onclick="toggleGenre('gacha')">🎰 ガチャガチャ</span>
     <span class="pill pill-figure" data-g="figure" onclick="toggleGenre('figure')">🗿 フィギュア</span>
     <span class="pill pill-ichiban" data-g="ichiban" onclick="toggleGenre('ichiban')">🎀 一番くじ</span>
+    <span class="pill pill-fav" data-g="fav" onclick="toggleFav()">☆ お気に入り</span>
   </div>
 
   <!-- Nav -->
@@ -644,6 +656,27 @@ onValue(itemsRef, snap => {
 // ── Genre toggle ──
 const ALL_GENRES = ['shokugan','gacha','figure','ichiban'];
 
+// ── Favorites ──
+const FAV_KEY = 'candytoys_favs';
+let favMode = false;
+function getFavs() { try { return new Set(JSON.parse(localStorage.getItem(FAV_KEY)||'[]')); } catch(e){ return new Set(); } }
+function saveFavs(set) { try { localStorage.setItem(FAV_KEY, JSON.stringify([...set])); } catch(e){} }
+function isFav(k) { return getFavs().has(k); }
+function toggleFavItem(k) {
+  const favs = getFavs();
+  if(favs.has(k)) favs.delete(k); else favs.add(k);
+  saveFavs(favs);
+}
+
+window.toggleFav = () => {
+  favMode = !favMode;
+  document.querySelector('[data-g="fav"]').classList.toggle('on', favMode);
+  // favモード中は全ジャンル表示
+  if(favMode) activeGenres = new Set(ALL_GENRES);
+  updatePills();
+  render();
+};
+
 window.toggleGenre = g => {
   if (g === 'all') {
     activeGenres = new Set(ALL_GENRES);
@@ -703,8 +736,9 @@ function formatDateLabel(v) {
 function sortKey(v) { return formatDateLabel(v).sortKey; }
 
 function filtered() {
+  const favs = getFavs();
   return Object.entries(items)
-    .filter(([,v]) => activeGenres.has(v.genre))
+    .filter(([k,v]) => activeGenres.has(v.genre) && (!favMode || favs.has(k)))
     .sort(([,a],[,b]) => sortKey(a).localeCompare(sortKey(b)));
 }
 function thisMonth() {
@@ -738,7 +772,7 @@ function renderStats() {
   if(cnt.figure)   parts.push(`🗿 フィギュア ${cnt.figure}`);
   if(cnt.ichiban)  parts.push(`🎀 一番くじ ${cnt.ichiban}`);
   document.getElementById('statsRow').innerHTML =
-    parts.map((p,i) => i===0 ? `<span>${p}</span>` : `<span class="stat-sep">·</span><span>${p}</span>`).join('');
+    parts.map((p,i) => i===0 ? `<span>${p}</span>` : `<span class="stat-sep">|</span><span>${p}</span>`).join('');
 }
 
 function renderCal() {
@@ -795,6 +829,7 @@ function renderCard() {
   document.getElementById('cardGrid').innerHTML = tm.map(([k,v])=>{
     const dl = formatDateLabel(v);
     const isVague = (v.dateType||'exact') !== 'exact';
+    const faved = isFav(k);
     const imgInner = v.img
       ? `<img src="${v.img}" class="card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div class="card-img-placeholder" style="display:none">${GE[v.genre]}</div>`
       : `<div class="card-img-placeholder">${GE[v.genre]}</div>`;
@@ -805,6 +840,7 @@ function renderCard() {
           <div class="card-date-day">${dl.day}</div>
           <div class="card-date-label">${dl.label}</div>
         </div>
+        ${faved?`<div style="position:absolute;top:6px;right:6px;font-size:16px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.4))">★</div>`:''}
       </div>
       <div class="card-body">
         <div class="card-name">${v.name}</div>
@@ -981,6 +1017,8 @@ window.openDetail = (k, sourceList) => {
      <button class="detail-nav-btn" onclick="openDetail('${list[idx+1]}')" ${!hasNext?'disabled':''}>次 ›</button>`;
 
   const acts = [];
+  const faved = isFav(k);
+  acts.push(`<button class="fav-btn ${faved?'on':''}" id="favBtn" onclick="clickFav('${k}')">${faved?'★ お気に入り済':'☆ お気に入り'}</button>`);
   if(v.url) acts.push(`<a href="${v.url}" target="_blank" class="btn btn-accent btn-sm">🔗 商品ページを開く</a>`);
   if(isAdmin) {
     acts.push(`<button class="btn btn-sm" onclick="closeModal('detailModal');openEdit('${k}')">✏️ 編集</button>`);
@@ -1105,6 +1143,14 @@ function addSwipeToClose(modalId) {
 }
 
 ['itemModal','detailModal','loginModal'].forEach(addSwipeToClose);
+
+window.clickFav = k => {
+  toggleFavItem(k);
+  const faved = isFav(k);
+  const btn = document.getElementById('favBtn');
+  if(btn){ btn.textContent = faved ? '★ お気に入り済' : '☆ お気に入り'; btn.classList.toggle('on', faved); }
+  if(favMode) render(); // favモード中なら再描画
+};
 
 // ── Modal helpers ──
 window.closeModal = id => document.getElementById(id).classList.remove('open');
