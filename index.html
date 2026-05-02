@@ -287,35 +287,33 @@ body {
 /* ── Modal ── */
 .modal-bg {
   display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-  z-index: 200; align-items: flex-end; justify-content: center; padding: 0;
-}
-@media (min-width: 600px) {
-  .modal-bg { align-items: center; padding: 1rem; }
+  z-index: 200; align-items: center; justify-content: center; padding: 5%;
 }
 .modal-bg.open { display: flex; }
 .modal {
-  background: var(--surface); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  background: var(--surface); border-radius: var(--radius-xl);
   border: 1px solid var(--border2); padding: 1.75rem;
   width: 100%; box-shadow: var(--shadow-lg);
   animation: slideUp 0.25s ease;
-  max-height: 92vh; overflow-y: auto;
+  max-height: 90vh; overflow-y: auto;
   touch-action: pan-y;
 }
 @media (min-width: 600px) {
-  .modal { border-radius: var(--radius-xl); width: min(480px, 100%); }
+  .modal-bg { padding: 1rem; }
+  .modal { width: min(480px, 100%); }
 }
 .modal-handle {
   width: 40px; height: 4px; border-radius: 99px;
   background: var(--border2); margin: 0 auto 1.25rem;
 }
 .detail-modal {
-  background: var(--surface); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  background: var(--surface); border-radius: var(--radius-xl);
   border: 1px solid var(--border2); width: 100%;
   box-shadow: var(--shadow-lg); animation: slideUp 0.25s ease; overflow: hidden;
   touch-action: pan-y;
 }
 @media (min-width: 600px) {
-  .detail-modal { border-radius: var(--radius-xl); width: min(420px, 100%); }
+  .detail-modal { width: min(420px, 100%); }
 }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 1.25rem; }
@@ -976,47 +974,71 @@ window.openDetail = (k, sourceList) => {
 
 
 
-// ── Swipe to change month ──
-(()=>{
-  let startX = 0, startY = 0;
-  const area = document.getElementById('viewCard');
-  const container = document.querySelector('.app');
-
-  container.addEventListener('touchstart', e => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-  }, { passive: true });
-
-  container.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
-    // 横方向の移動が縦より大きく、60px以上なら月切り替え
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60) {
-      // モーダルが開いていたら無視
-      if (document.querySelector('.modal-bg.open')) return;
-      if (dx < 0) nextMonth(); else prevMonth();
-    }
-  }, { passive: true });
-})();
-
-// ── Swipe left/right in detail modal to navigate items ──
+// ── Swipe left/right in detail modal to navigate items (smooth slide) ──
 (()=>{
   const bg = document.getElementById('detailModal');
-  let startX = 0, startY = 0;
+  const getInner = () => bg.querySelector('.detail-modal');
+  let startX = 0, startY = 0, isDragging = false;
 
   bg.addEventListener('touchstart', e => {
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
+    isDragging = true;
+    const inner = getInner();
+    if (inner) inner.style.transition = 'none';
+  }, { passive: true });
+
+  bg.addEventListener('touchmove', e => {
+    if (!isDragging) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      const inner = getInner();
+      if (inner) inner.style.transform = `translateX(${dx * 0.4}px)`;
+    }
   }, { passive: true });
 
   bg.addEventListener('touchend', e => {
+    if (!isDragging) return;
+    isDragging = false;
     const dx = e.changedTouches[0].clientX - startX;
     const dy = e.changedTouches[0].clientY - startY;
+    const inner = getInner();
+
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
       const list = window._detailList || [];
       const idx = list.indexOf(window._detailKey);
-      if (dx < 0 && idx < list.length - 1) openDetail(list[idx + 1]); // 左スワイプ → 次
-      if (dx > 0 && idx > 0) openDetail(list[idx - 1]);               // 右スワイプ → 前
+      const canNext = dx < 0 && idx < list.length - 1;
+      const canPrev = dx > 0 && idx > 0;
+
+      if (canNext || canPrev) {
+        // スライドアウト
+        if (inner) {
+          inner.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+          inner.style.transform = `translateX(${dx < 0 ? '-60%' : '60%'})`;
+          inner.style.opacity = '0';
+        }
+        setTimeout(() => {
+          if (inner) { inner.style.transition = 'none'; inner.style.transform = `translateX(${dx < 0 ? '60%' : '-60%'})`; inner.style.opacity = '0'; }
+          if (canNext) openDetail(list[idx + 1]);
+          else openDetail(list[idx - 1]);
+          requestAnimationFrame(() => {
+            const newInner = getInner();
+            if (newInner) {
+              newInner.style.transition = 'transform 0.22s ease, opacity 0.22s ease';
+              newInner.style.transform = 'translateX(0)';
+              newInner.style.opacity = '1';
+            }
+          });
+        }, 180);
+        return;
+      }
+    }
+    // スナップバック
+    if (inner) {
+      inner.style.transition = 'transform 0.2s ease';
+      inner.style.transform = 'translateX(0)';
+      setTimeout(() => { if(inner) inner.style.transition = ''; }, 200);
     }
   }, { passive: true });
 })();
