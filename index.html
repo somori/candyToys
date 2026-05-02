@@ -287,15 +287,35 @@ body {
 /* ── Modal ── */
 .modal-bg {
   display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-  z-index: 200; align-items: center; justify-content: center; padding: 1rem;
+  z-index: 200; align-items: flex-end; justify-content: center; padding: 0;
+}
+@media (min-width: 600px) {
+  .modal-bg { align-items: center; padding: 1rem; }
 }
 .modal-bg.open { display: flex; }
 .modal {
-  background: var(--surface); border-radius: var(--radius-xl);
+  background: var(--surface); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   border: 1px solid var(--border2); padding: 1.75rem;
-  width: min(480px, 100%); box-shadow: var(--shadow-lg);
-  animation: slideUp 0.2s ease;
-  max-height: 90vh; overflow-y: auto;
+  width: 100%; box-shadow: var(--shadow-lg);
+  animation: slideUp 0.25s ease;
+  max-height: 92vh; overflow-y: auto;
+  touch-action: pan-y;
+}
+@media (min-width: 600px) {
+  .modal { border-radius: var(--radius-xl); width: min(480px, 100%); }
+}
+.modal-handle {
+  width: 40px; height: 4px; border-radius: 99px;
+  background: var(--border2); margin: 0 auto 1.25rem;
+}
+.detail-modal {
+  background: var(--surface); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  border: 1px solid var(--border2); width: 100%;
+  box-shadow: var(--shadow-lg); animation: slideUp 0.25s ease; overflow: hidden;
+  touch-action: pan-y;
+}
+@media (min-width: 600px) {
+  .detail-modal { border-radius: var(--radius-xl); width: min(420px, 100%); }
 }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 1.25rem; }
@@ -368,6 +388,13 @@ body {
 .detail-date { font-size: 13px; color: var(--text2); font-weight: 500; }
 .detail-note { font-size: 13px; color: var(--text2); }
 .detail-acts { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; }
+.detail-nav-btn {
+  padding: 6px 16px; border-radius: var(--radius); border: 1px solid var(--border2);
+  background: var(--bg2); color: var(--text); font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: background 0.12s;
+}
+.detail-nav-btn:hover:not(:disabled) { background: var(--bg3); }
+.detail-nav-btn:disabled { opacity: 0.3; cursor: default; }
 
 /* Cal thumbnail chip */
 .chip-thumb-img { width: 14px; height: 14px; border-radius: 2px; object-fit: cover; flex-shrink: 0; vertical-align: middle; margin-right: 2px; }
@@ -449,6 +476,7 @@ body {
 <!-- Add/Edit Modal -->
 <div class="modal-bg" id="itemModal" onclick="bgClick(event,'itemModal')">
   <div class="modal">
+    <div class="modal-handle"></div>
     <h2 id="modalTitle">アイテムを追加</h2>
     <div class="fg">
       <label>商品名 *</label>
@@ -519,12 +547,14 @@ body {
   <div class="detail-modal">
     <div id="detailImgWrap"></div>
     <div class="detail-body">
+      <div class="modal-handle"></div>
       <div class="detail-name" id="detailName"></div>
       <div class="detail-meta">
         <span class="list-badge" id="detailBadge"></span>
         <span class="detail-date" id="detailDate"></span>
         <span class="detail-note" id="detailNote"></span>
       </div>
+      <div id="detailNav" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"></div>
       <div class="detail-acts" id="detailActs"></div>
     </div>
   </div>
@@ -898,11 +928,24 @@ window.delItem = k => {
   closeModal('detailModal');
 };
 
-window.openDetail = k => {
+window.openDetail = (k, sourceList) => {
+  // sourceListがなければ現在の表示リストを使う
+  if (sourceList) window._detailList = sourceList;
+  if (!window._detailList || !window._detailList.includes(k)) {
+    window._detailList = thisMonth().map(([k])=>k);
+  }
+  window._detailKey = k;
+
   const v = items[k]; if(!v) return;
   const dl = formatDateLabel(v);
   const isVague = (v.dateType||'exact') !== 'exact';
   const dateStr = `${dl.label} ${dl.day}${isVague?' (目安)':''}`;
+
+  const list = window._detailList;
+  const idx = list.indexOf(k);
+  const hasPrev = idx > 0;
+  const hasNext = idx < list.length - 1;
+
   document.getElementById('detailImgWrap').innerHTML = v.img
     ? `<img src="${v.img}" class="detail-img" onerror="this.outerHTML='<div class=detail-img-ph>${GE[v.genre]}</div>'" />`
     : `<div class="detail-img-ph">${GE[v.genre]}</div>`;
@@ -911,6 +954,13 @@ window.openDetail = k => {
   document.getElementById('detailBadge').style = GB[v.genre];
   document.getElementById('detailDate').textContent = dateStr;
   document.getElementById('detailNote').textContent = [v.price?`💴 ${v.price}`:'', v.note||''].filter(Boolean).join(' · ');
+
+  // ナビゲーションボタン
+  document.getElementById('detailNav').innerHTML =
+    `<button class="detail-nav-btn" onclick="openDetail('${list[idx-1]}')" ${!hasPrev?'disabled':''}>‹ 前</button>
+     <span style="font-size:11px;color:var(--text3)">${idx+1} / ${list.length}</span>
+     <button class="detail-nav-btn" onclick="openDetail('${list[idx+1]}')" ${!hasNext?'disabled':''}>次 ›</button>`;
+
   const acts = [];
   if(v.url) acts.push(`<a href="${v.url}" target="_blank" class="btn btn-accent btn-sm">🔗 商品ページを開く</a>`);
   if(isAdmin) {
@@ -922,6 +972,96 @@ window.openDetail = k => {
 };
 
 
+
+// ── Swipe to change month ──
+(()=>{
+  let startX = 0, startY = 0;
+  const area = document.getElementById('viewCard');
+  const container = document.querySelector('.app');
+
+  container.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  container.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    // 横方向の移動が縦より大きく、60px以上なら月切り替え
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60) {
+      // モーダルが開いていたら無視
+      if (document.querySelector('.modal-bg.open')) return;
+      if (dx < 0) nextMonth(); else prevMonth();
+    }
+  }, { passive: true });
+})();
+
+// ── Swipe left/right in detail modal to navigate items ──
+(()=>{
+  const bg = document.getElementById('detailModal');
+  let startX = 0, startY = 0;
+
+  bg.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  bg.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      const list = window._detailList || [];
+      const idx = list.indexOf(window._detailKey);
+      if (dx < 0 && idx < list.length - 1) openDetail(list[idx + 1]); // 左スワイプ → 次
+      if (dx > 0 && idx > 0) openDetail(list[idx - 1]);               // 右スワイプ → 前
+    }
+  }, { passive: true });
+})();
+
+// ── Swipe to close modals ──
+function addSwipeToClose(modalId) {
+  const bg = document.getElementById(modalId);
+  const inner = bg.querySelector('.modal, .detail-modal, .login-modal');
+  if (!inner) return;
+  let startY = 0, curY = 0, dragging = false;
+
+  inner.addEventListener('touchstart', e => {
+    // スクロール中は無視
+    startY = e.touches[0].clientY;
+    curY = startY;
+    dragging = true;
+    inner.style.transition = 'none';
+  }, { passive: true });
+
+  inner.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    curY = e.touches[0].clientY;
+    const dy = curY - startY;
+    if (dy > 0) {
+      inner.style.transform = `translateY(${dy}px)`;
+    }
+  }, { passive: true });
+
+  inner.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    const dy = curY - startY;
+    inner.style.transition = 'transform 0.25s ease';
+    if (dy > 100) {
+      inner.style.transform = `translateY(100%)`;
+      setTimeout(() => {
+        closeModal(modalId);
+        inner.style.transform = '';
+        inner.style.transition = '';
+      }, 220);
+    } else {
+      inner.style.transform = '';
+      setTimeout(() => { inner.style.transition = ''; }, 250);
+    }
+  });
+}
+
+['itemModal','detailModal','loginModal'].forEach(addSwipeToClose);
 
 // ── Modal helpers ──
 window.closeModal = id => document.getElementById(id).classList.remove('open');
