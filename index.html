@@ -183,7 +183,33 @@ body {
   font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 700;
   letter-spacing: -0.5px;
 }
-/* Stats text */
+/* Timeline bar */
+.timeline-wrap {
+  margin-bottom: 1.2rem;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; padding-bottom: 2px;
+}
+.timeline-wrap::-webkit-scrollbar { display: none; }
+.timeline-bar {
+  display: flex; gap: 6px; width: max-content; padding: 2px 2px;
+}
+.tl-month {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 7px 10px; border-radius: var(--radius-lg); cursor: pointer;
+  border: 1.5px solid transparent; transition: all 0.15s; min-width: 52px;
+  background: var(--surface);
+}
+.tl-month:hover { background: var(--bg2); }
+.tl-month.active {
+  border-color: var(--accent); background: var(--bg2);
+}
+.tl-month-label { font-size: 11px; font-weight: 700; color: var(--text2); white-space: nowrap; }
+.tl-month.active .tl-month-label { color: var(--accent); }
+.tl-dots { display: flex; gap: 2px; align-items: center; min-height: 8px; }
+.tl-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.tl-count { font-size: 10px; color: var(--text3); font-weight: 500; }
 .stats-row {
   display: flex; gap: 4px 8px; flex-wrap: wrap;
   margin-bottom: 1rem;
@@ -510,6 +536,11 @@ body {
     </div>
   </div>
 
+  <!-- Timeline bar -->
+  <div class="timeline-wrap">
+    <div class="timeline-bar" id="timelineBar"></div>
+  </div>
+
   <!-- Stats -->
   <div class="stats-row" id="statsRow"></div>
 
@@ -658,7 +689,7 @@ import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstati
 // ============================================================
 // 🔧 設定：あとでここを書き換えてください
 // ============================================================
-const ADMIN_PASSWORD = "Hello!2015!"; // ← ここをあなたのパスワードに変更
+const ADMIN_PASSWORD = "YOUR_PASSWORD"; // ← ここをあなたのパスワードに変更
 
 const firebaseConfig = {
   apiKey: "AIzaSyDZLsBsHzv_CzWloLdiUahoFdny324DOME",
@@ -763,6 +794,8 @@ window.setView = v => {
   render();
 };
 
+window.jumpToMonth = (y, m) => { year=y; month=m; render(); };
+
 window.prevMonth = () => { if(--month<0){month=11;year--;} render(); };
 window.nextMonth = () => { if(++month>11){month=0;year++;} render(); };
 
@@ -809,10 +842,68 @@ function thisMonth() {
 function render() {
   const mN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   document.getElementById('monthTitle').textContent = `${year}年 ${mN[month]}`;
+  renderTimeline();
   renderStats();
   if (currentView==='cal')  renderCal();
   if (currentView==='card') renderCard();
   if (currentView==='list') renderList();
+}
+
+function renderTimeline() {
+  // 登録アイテムから年月一覧を作る（前後3ヶ月も含める）
+  const monthCounts = {};
+  const allItems = Object.entries(items).filter(([,v]) => activeGenres.has(v.genre) && (!favMode || getFavs().has(_k => _k)));
+
+  // 全アイテムから年月ごとにカウント
+  Object.entries(items).forEach(([k,v]) => {
+    const type = v.dateType||'exact';
+    let ym;
+    if(type==='exact') ym = (v.date||'').slice(0,7);
+    else if(type==='month') ym = v.dateMonth||'';
+    else ym = v.datePeriodMonth||'';
+    if(!ym) return;
+    if(!monthCounts[ym]) monthCounts[ym] = {shokugan:0,gacha:0,figure:0,ichiban:0,total:0};
+    monthCounts[ym][v.genre] = (monthCounts[ym][v.genre]||0) + 1;
+    monthCounts[ym].total++;
+  });
+
+  // 現在月の前後6ヶ月を含む範囲を表示
+  const months = [];
+  for(let i = -3; i <= 9; i++) {
+    let m2 = month + i, y2 = year;
+    while(m2 < 0)  { m2 += 12; y2--; }
+    while(m2 > 11) { m2 -= 12; y2++; }
+    months.push({ year: y2, month: m2, ym: `${y2}-${String(m2+1).padStart(2,'0')}` });
+  }
+
+  const mShort = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const dotColors = { shokugan:'var(--shokugan)', gacha:'var(--gacha)', figure:'var(--figure)', ichiban:'var(--ichiban)' };
+
+  const bar = document.getElementById('timelineBar');
+  bar.innerHTML = months.map(({year:y2, month:m2, ym}) => {
+    const isActive = y2===year && m2===month;
+    const cnt = monthCounts[ym];
+    const dotsHtml = cnt ? Object.entries(dotColors).map(([g,c]) =>
+      cnt[g] ? `<span class="tl-dot" style="background:${c}" title="${g}"></span>` : ''
+    ).join('') + (cnt.total > 4 ? `<span class="tl-count">+${cnt.total-4}</span>` : '') : '';
+    const yearLabel = m2===0 || isActive ? `<span style="font-size:9px;color:var(--text3);display:block;text-align:center">${y2}</span>` : '';
+    return `<div class="tl-month ${isActive?'active':''} ${cnt?'':'empty'}" onclick="jumpToMonth(${y2},${m2})" style="${!cnt?'opacity:0.4':''}">
+      ${yearLabel}
+      <div class="tl-month-label">${mShort[m2]}</div>
+      <div class="tl-dots">${dotsHtml}</div>
+    </div>`;
+  }).join('');
+
+  // アクティブな月を中央にスクロール
+  requestAnimationFrame(() => {
+    const wrap = document.querySelector('.timeline-wrap');
+    const active = bar.querySelector('.tl-month.active');
+    if(wrap && active) {
+      const wrapCenter = wrap.offsetWidth / 2;
+      const activeCenter = active.offsetLeft + active.offsetWidth / 2;
+      wrap.scrollLeft = activeCenter - wrapCenter;
+    }
+  });
 }
 
 function renderStats() {
