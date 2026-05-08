@@ -536,11 +536,6 @@ body {
     </div>
   </div>
 
-  <!-- Timeline bar -->
-  <div class="timeline-wrap">
-    <div class="timeline-bar" id="timelineBar"></div>
-  </div>
-
   <!-- Stats -->
   <div class="stats-row" id="statsRow"></div>
 
@@ -559,6 +554,11 @@ body {
   <!-- List view -->
   <div id="viewList" style="display:none">
     <div class="list-view" id="listView"></div>
+  </div>
+
+  <!-- Timeline bar -->
+  <div class="timeline-wrap" style="margin-top:1.5rem">
+    <div class="timeline-bar" id="timelineBar"></div>
   </div>
 
 
@@ -1173,6 +1173,29 @@ window.openDetail = (k, sourceList) => {
 };
 
 
+
+// ── Swipe on main content to change month ──
+(()=>{
+  let startX = 0, startY = 0;
+  const container = document.querySelector('.app');
+
+  container.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  container.addEventListener('touchend', e => {
+    // モーダルが開いていたら無視
+    if (document.querySelector('.modal-bg.open')) return;
+    // タイムライン帯の上のスワイプは無視（横スクロールと干渉するため）
+    if (e.target.closest('.timeline-wrap')) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60) {
+      if (dx < 0) nextMonth(); else prevMonth();
+    }
+  }, { passive: true });
+})();
 
 // ── Swipe left/right in detail modal to navigate items (smooth slide) ──
 (()=>{
