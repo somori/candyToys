@@ -569,6 +569,22 @@ body {
   <div class="modal">
     <div class="modal-handle"></div>
     <h2 id="modalTitle">アイテムを追加</h2>
+
+    <!-- OGP URL fetch -->
+    <div class="fg" id="ogpWrap">
+      <label>🔗 URLから自動入力（任意）</label>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="fOgpUrl" placeholder="商品ページのURLを貼り付け" style="flex:1" onkeydown="if(event.key==='Enter')fetchOgp()" />
+        <button class="btn btn-sm" id="ogpFetchBtn" onclick="fetchOgp()" style="white-space:nowrap">取得</button>
+      </div>
+      <div id="ogpStatus" style="font-size:11px;color:var(--text2);margin-top:5px;display:none"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <span style="font-size:11px;color:var(--text3)">または手動入力</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+
     <div class="fg">
       <label>商品名 *</label>
       <input type="text" id="fName" placeholder="例：ワンピース DXF Vol.5" />
@@ -1038,6 +1054,57 @@ function updateAdminUI(){
 }
 
 // ── Add/Edit ──
+// ── OGP fetch ──
+window.fetchOgp = async () => {
+  const url = document.getElementById('fOgpUrl').value.trim();
+  if (!url) return;
+  const statusEl = document.getElementById('ogpStatus');
+  const btn = document.getElementById('ogpFetchBtn');
+  statusEl.style.display = 'block';
+  statusEl.textContent = '取得中...';
+  btn.disabled = true;
+
+  try {
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl);
+    const data = await res.json();
+    const html = data.contents;
+
+    // OGPタグをパース
+    const getMeta = (prop) => {
+      const m = html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]+content=["']([^"']+)["']`, 'i'))
+               || html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${prop}["']`, 'i'));
+      return m ? m[1].trim() : '';
+    };
+
+    const title = getMeta('og:title') || getMeta('twitter:title') || '';
+    const image = getMeta('og:image') || getMeta('twitter:image') || '';
+    const desc  = getMeta('og:description') || getMeta('twitter:description') || '';
+
+    if (!title && !image) {
+      statusEl.textContent = '⚠️ 情報を取得できませんでした。手動で入力してください。';
+      statusEl.style.color = 'var(--accent)';
+    } else {
+      if (title) document.getElementById('fName').value = title;
+      if (image) {
+        document.getElementById('fImg').value = image;
+        previewImg();
+      }
+      if (desc && !document.getElementById('fNote').value) {
+        document.getElementById('fNote').value = desc.slice(0, 60);
+      }
+      // 商品URLもセット
+      document.getElementById('fUrl').value = url;
+      statusEl.textContent = '✅ 取得できました！内容を確認してください。';
+      statusEl.style.color = 'var(--gacha-dark)';
+    }
+  } catch(e) {
+    statusEl.textContent = '⚠️ 取得に失敗しました。手動で入力してください。';
+    statusEl.style.color = 'var(--accent)';
+  }
+  btn.disabled = false;
+};
+
 window.updateDateFields = () => {
   const t = document.getElementById('fDateType').value;
   document.getElementById('fDateExactWrap').style.display  = t==='exact'  ? '' : 'none';
@@ -1048,6 +1115,9 @@ window.updateDateFields = () => {
 window.openAdd = (prefillDate) => {
   editKey=null;
   document.getElementById('modalTitle').textContent='アイテムを追加';
+  document.getElementById('ogpWrap').style.display='';
+  document.getElementById('fOgpUrl').value='';
+  document.getElementById('ogpStatus').style.display='none';
   document.getElementById('fName').value='';
   document.getElementById('fDate').value=prefillDate||'';
   document.getElementById('fDateMonth').value='';
@@ -1067,6 +1137,7 @@ window.openEdit = k => {
   const v=items[k]; if(!v) return;
   editKey=k;
   document.getElementById('modalTitle').textContent='アイテムを編集';
+  document.getElementById('ogpWrap').style.display='none';
   document.getElementById('fName').value=v.name;
   const type = v.dateType||'exact';
   document.getElementById('fDateType').value=type;
