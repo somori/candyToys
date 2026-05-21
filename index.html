@@ -42,6 +42,8 @@
   --figure-dark: #0a3560;
   --ichiban: #f0b0d8;
   --ichiban-dark: #6a0040;
+  --collection: #b5e8c8;
+  --collection-dark: #1a5c3a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -131,8 +133,9 @@ body {
 .gtab-shokugan.on { background: var(--shokugan); color: var(--shokugan-dark); }
 .gtab-gacha.on    { background: var(--gacha);    color: var(--gacha-dark); }
 .gtab-figure.on   { background: var(--figure);   color: var(--figure-dark); }
-.gtab-ichiban.on  { background: var(--ichiban);  color: var(--ichiban-dark); }
-.gtab-fav.on      { background: #f5d020;         color: #5a3c00; }
+.gtab-ichiban.on  { background: var(--ichiban);     color: var(--ichiban-dark); }
+.gtab-collection.on { background: var(--collection); color: var(--collection-dark); }
+.gtab-fav.on      { background: #f5d020;             color: #5a3c00; }
 
 /* View tabs */
 .view-tabs {
@@ -264,7 +267,8 @@ body {
 .chip-shokugan { background: var(--shokugan); color: var(--shokugan-dark); }
 .chip-gacha    { background: var(--gacha);    color: var(--gacha-dark); }
 .chip-figure   { background: var(--figure);   color: var(--figure-dark); }
-.chip-ichiban  { background: var(--ichiban);  color: var(--ichiban-dark); }
+.chip-ichiban    { background: var(--ichiban);    color: var(--ichiban-dark); }
+.chip-collection { background: var(--collection); color: var(--collection-dark); }
 .chip-more { font-size: 10px; color: var(--text3); padding-left: 3px; font-weight: 500; }
 
 /* ── Card Grid (image view) ── */
@@ -406,7 +410,8 @@ body {
 .go-shokugan { background: var(--shokugan); color: var(--shokugan-dark); border-color: #d4933a; }
 .go-gacha    { background: var(--gacha);    color: var(--gacha-dark);    border-color: #2aaa7a; }
 .go-figure   { background: var(--figure);   color: var(--figure-dark);   border-color: #4a9ae0; }
-.go-ichiban  { background: var(--ichiban);  color: var(--ichiban-dark);  border-color: #d070a8; }
+.go-ichiban    { background: var(--ichiban);    color: var(--ichiban-dark);    border-color: #d070a8; }
+.go-collection { background: var(--collection); color: var(--collection-dark); border-color: #4aaa78; }
 .img-preview {
   width: 100%; max-height: 120px; object-fit: cover; border-radius: var(--radius);
   margin-top: 6px; display: none; border: 1px solid var(--border);
@@ -518,8 +523,9 @@ body {
     <button class="gtab gtab-shokugan" data-g="shokugan" onclick="toggleGenre('shokugan')">🍬 食玩</button>
     <button class="gtab gtab-gacha"    data-g="gacha"    onclick="toggleGenre('gacha')">🎰 ガチャ</button>
     <button class="gtab gtab-figure"   data-g="figure"   onclick="toggleGenre('figure')">🗿 フィギュア</button>
-    <button class="gtab gtab-ichiban"  data-g="ichiban"  onclick="toggleGenre('ichiban')">🎀 一番くじ</button>
-    <button class="gtab gtab-fav"      data-g="fav"      onclick="toggleFav()">⭐ ほしい！</button>
+    <button class="gtab gtab-ichiban"    data-g="ichiban"    onclick="toggleGenre('ichiban')">🎀 一番くじ</button>
+    <button class="gtab gtab-collection" data-g="collection" onclick="toggleGenre('collection')">🧸 コレクショントイ</button>
+    <button class="gtab gtab-fav"        data-g="fav"        onclick="toggleFav()">⭐ ほしい！</button>
   </div>
 
   <!-- Nav -->
@@ -621,10 +627,11 @@ body {
     <div class="fg">
       <label>ジャンル *</label>
       <div class="genre-grid" style="grid-template-columns:repeat(2,1fr)">
-        <button class="go go-shokugan on" data-g="shokugan" onclick="selGenre('shokugan')">🍬 食玩</button>
-        <button class="go go-gacha" data-g="gacha" onclick="selGenre('gacha')">🎰 ガチャ</button>
-        <button class="go go-figure" data-g="figure" onclick="selGenre('figure')">🗿 フィギュア</button>
-        <button class="go go-ichiban" data-g="ichiban" onclick="selGenre('ichiban')">🎀 一番くじ</button>
+        <button class="go go-shokugan on" data-g="shokugan"   onclick="selGenre('shokugan')">🍬 食玩</button>
+        <button class="go go-gacha"       data-g="gacha"      onclick="selGenre('gacha')">🎰 ガチャ</button>
+        <button class="go go-figure"      data-g="figure"     onclick="selGenre('figure')">🗿 フィギュア</button>
+        <button class="go go-ichiban"     data-g="ichiban"    onclick="selGenre('ichiban')">🎀 一番くじ</button>
+        <button class="go go-collection"  data-g="collection" onclick="selGenre('collection')" style="grid-column:1/-1">🧸 コレクショントイ</button>
       </div>
     </div>
     <div class="fg">
@@ -734,13 +741,14 @@ let editKey      = null;
 let selGenreVal  = 'shokugan';
 
 // ── Helpers ──
-const GL = { shokugan:'食玩', gacha:'ガチャ', figure:'フィギュア', ichiban:'一番くじ' };
-const GE = { shokugan:'🍬', gacha:'🎰', figure:'🗿', ichiban:'🎀' };
-const GC = { shokugan:'chip-shokugan', gacha:'chip-gacha', figure:'chip-figure', ichiban:'chip-ichiban' };
+const GL = { shokugan:'食玩', gacha:'ガチャ', figure:'フィギュア', ichiban:'一番くじ', collection:'コレクショントイ' };
+const GE = { shokugan:'🍬', gacha:'🎰', figure:'🗿', ichiban:'🎀', collection:'🧸' };
+const GC = { shokugan:'chip-shokugan', gacha:'chip-gacha', figure:'chip-figure', ichiban:'chip-ichiban', collection:'chip-collection' };
 const GB = { shokugan:`background:var(--shokugan);color:var(--shokugan-dark)`,
              gacha:   `background:var(--gacha);color:var(--gacha-dark)`,
              figure:  `background:var(--figure);color:var(--figure-dark)`,
-             ichiban: `background:var(--ichiban);color:var(--ichiban-dark)` };
+             ichiban: `background:var(--ichiban);color:var(--ichiban-dark)`,
+             collection:`background:var(--collection);color:var(--collection-dark)` };
 
 // ── Firebase realtime listener ──
 onValue(itemsRef, snap => {
@@ -751,7 +759,7 @@ onValue(itemsRef, snap => {
 });
 
 // ── Genre toggle ──
-const ALL_GENRES = ['shokugan','gacha','figure','ichiban'];
+const ALL_GENRES = ['shokugan','gacha','figure','ichiban','collection'];
 
 // ── Favorites ──
 const FAV_KEY = 'candytoys_favs';
@@ -878,7 +886,7 @@ function renderTimeline() {
     else if(type==='month') ym = v.dateMonth||'';
     else ym = v.datePeriodMonth||'';
     if(!ym) return;
-    if(!monthCounts[ym]) monthCounts[ym] = {shokugan:0,gacha:0,figure:0,ichiban:0,total:0};
+    if(!monthCounts[ym]) monthCounts[ym] = {shokugan:0,gacha:0,figure:0,ichiban:0,collection:0,total:0};
     monthCounts[ym][v.genre] = (monthCounts[ym][v.genre]||0) + 1;
     monthCounts[ym].total++;
   });
@@ -893,7 +901,7 @@ function renderTimeline() {
   }
 
   const mShort = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-  const dotColors = { shokugan:'var(--shokugan)', gacha:'var(--gacha)', figure:'var(--figure)', ichiban:'var(--ichiban)' };
+  const dotColors = { shokugan:'var(--shokugan)', gacha:'var(--gacha)', figure:'var(--figure)', ichiban:'var(--ichiban)', collection:'var(--collection)' };
 
   const bar = document.getElementById('timelineBar');
   bar.innerHTML = months.map(({year:y2, month:m2, ym}) => {
@@ -924,13 +932,14 @@ function renderTimeline() {
 
 function renderStats() {
   const tm = thisMonth();
-  const cnt = {shokugan:0,gacha:0,figure:0,ichiban:0};
+  const cnt = {shokugan:0,gacha:0,figure:0,ichiban:0,collection:0};
   tm.forEach(([,v])=>{ if(cnt[v.genre]!==undefined) cnt[v.genre]++; });
   const parts = [`全${tm.length}件`];
-  if(cnt.shokugan) parts.push(`🍬 食玩 ${cnt.shokugan}`);
-  if(cnt.gacha)    parts.push(`🎰 ガチャ ${cnt.gacha}`);
-  if(cnt.figure)   parts.push(`🗿 フィギュア ${cnt.figure}`);
-  if(cnt.ichiban)  parts.push(`🎀 一番くじ ${cnt.ichiban}`);
+  if(cnt.shokugan)    parts.push(`🍬 食玩 ${cnt.shokugan}`);
+  if(cnt.gacha)       parts.push(`🎰 ガチャ ${cnt.gacha}`);
+  if(cnt.figure)      parts.push(`🗿 フィギュア ${cnt.figure}`);
+  if(cnt.ichiban)     parts.push(`🎀 一番くじ ${cnt.ichiban}`);
+  if(cnt.collection)  parts.push(`🧸 コレクショントイ ${cnt.collection}`);
   document.getElementById('statsRow').innerHTML =
     parts.map((p,i) => i===0 ? `<span>${p}</span>` : `<span class="stat-sep">|</span><span>${p}</span>`).join('');
 }
