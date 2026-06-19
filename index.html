@@ -309,7 +309,7 @@ body {
 .card-date-label {
   font-size: 11px; color: rgba(255,255,255,0.85); font-weight: 500;
   text-shadow: 0 1px 3px rgba(0,0,0,0.4);
-  margin-top: 1px;
+  margin-top: 1px; line-height: 1.3;
 }
 .card-body { padding: 8px 10px 10px; }
 .card-name { font-size: 12px; font-weight: 700; margin-bottom: 5px; line-height: 1.4; }
@@ -877,7 +877,7 @@ window.setPeriod = (past) => { includePast = past; render(); };
 
 // ── Date helpers ──
 function formatDateLabel(v) {
-  // returns {day, label, sortKey}
+  // returns {day, label, sortKey} - dayは常に「○月」表記で統一
   const type = v.dateType || 'exact';
   if (type === 'month') {
     const [y,m] = (v.dateMonth||'').split('-');
@@ -892,10 +892,26 @@ function formatDateLabel(v) {
   // exact
   if (!v.date) return { day: '?', label: '', sortKey: '9999-99-99' };
   const d = new Date(v.date+'T00:00:00');
-  return { day: `${d.getDate()}`, label: `${d.getFullYear()}年${d.getMonth()+1}月`, sortKey: v.date };
+  return { day: `${d.getMonth()+1}月`, label: `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`, sortKey: v.date };
 }
 
 function sortKey(v) { return formatDateLabel(v).sortKey; }
+
+function fullDateLabel(v) {
+  const type = v.dateType || 'exact';
+  if (type === 'exact') return formatDateLabel(v).label; // すでにフル日付
+  if (type === 'month') {
+    const [y,m] = (v.dateMonth||'').split('-');
+    return y && m ? `${y}年${parseInt(m)}月` : '日付未定';
+  }
+  if (type === 'period') {
+    const [y,m] = (v.datePeriodMonth||'').split('-');
+    const sub = { w1:'第1週', w2:'第2週', w3:'第3週', w4:'第4週', w5:'第5週',
+                  early:'上旬', mid:'中旬', late:'下旬' }[v.datePeriodSub]||'';
+    return y && m ? `${y}年${parseInt(m)}月 ${sub}` : '日付未定';
+  }
+  return '日付未定';
+}
 
 function filtered() {
   const favs = getFavs();
@@ -1110,13 +1126,12 @@ function renderList() {
   const tm = thisMonth();
   if(!tm.length){ document.getElementById('listView').innerHTML='<div class="empty">この月の登録アイテムはありません</div>'; return; }
   document.getElementById('listView').innerHTML = tm.map(([k,v])=>{
-    const dl = formatDateLabel(v);
     const isVague = (v.dateType||'exact') !== 'exact';
     return `<div class="list-item" onclick="openDetail('${k}')" style="cursor:pointer">
       ${imgTag(v,'list-thumb','list-thumb-ph')}
       <div class="list-info">
         <div class="list-name">${v.name}</div>
-        <div class="list-meta">${dl.label} ${dl.day}${isVague?' (目安)':''}${v.price?` · 💴${v.price}`:''}${v.note?` · ${v.note}`:''}</div>
+        <div class="list-meta">${fullDateLabel(v)}${isVague?' (目安)':''}${v.price?` · 💴${v.price}`:''}${v.note?` · ${v.note}`:''}</div>
       </div>
       <span class="list-badge" style="${GB[v.genre]}">${GL[v.genre]}</span>
     </div>`;
@@ -1464,7 +1479,7 @@ window.openDetail = (k, sourceList) => {
   const v = items[k]; if(!v) return;
   const dl = formatDateLabel(v);
   const isVague = (v.dateType||'exact') !== 'exact';
-  const dateStr = `${dl.label} ${dl.day}${isVague?' (目安)':''}`;
+  const dateStr = `${fullDateLabel(v)}${isVague?' (目安)':''}`;
 
   const list = window._detailList;
   const idx = list.indexOf(k);
