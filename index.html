@@ -916,8 +916,8 @@ function thisMonth() {
   if (showAllMode) {
     let list = filtered();
     if (!includePast) {
-      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 14);
-      const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+      const today = new Date();
+      const cutoffStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-01`; // 当月1日から
       list = list.filter(([,v]) => {
         const d = getItemDateForCompare(v);
         return !d || d >= cutoffStr; // 日付不明のものは常に表示
