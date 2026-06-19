@@ -506,6 +506,7 @@ body {
 <!-- Header -->
 <header class="header">
   <button class="btn btn-sm btn-accent" id="addBtn" onclick="openAdd()" style="display:none;border-radius:99px;padding:6px 14px">＋ 追加</button>
+  <button class="btn btn-sm" id="csvBtn" onclick="openCsvModal()" style="display:none;border-radius:99px;padding:6px 14px">📋 CSV</button>
   <span class="admin-badge" id="adminBadge">管理者モード</span>
   <div class="admin-fab" id="adminBtn" onclick="toggleAdmin()" title="管理者">✏️</div>
 </header>
@@ -690,6 +691,36 @@ body {
       ！）ブラウザの履歴・データを削除やブラウザアプリの再インストールをするとリセットされます
     </div>
     <button class="btn btn-accent" style="width:100%" onclick="closeModal('favOnboardModal')">わかった！</button>
+  </div>
+</div>
+
+<!-- CSV Import Modal -->
+<div class="modal-bg" id="csvModal" onclick="bgClick(event,'csvModal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📋 CSV一括登録</h2>
+    <div class="fg">
+      <label>CSVファイルを選択</label>
+      <input type="file" id="csvFile" accept=".csv" onchange="previewCsv()" style="padding:6px" />
+    </div>
+    <div id="csvPreviewWrap" style="display:none">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">
+        <span id="csvCount"></span>件が読み込まれました。確認して登録してください。
+      </div>
+      <div id="csvPreview" style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);font-size:12px"></div>
+      <div id="csvErrors" style="margin-top:8px;font-size:11px;color:var(--accent)"></div>
+    </div>
+    <div style="margin-top:14px;background:var(--bg2);border-radius:var(--radius);padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.8">
+      <strong style="color:var(--text)">CSVフォーマット</strong><br>
+      列順：名前, 発売日, ジャンル, 値段, メモ, 画像URL, 商品URL<br>
+      ジャンル：shokugan / gacha / figure / ichiban / collection<br>
+      発売日：YYYY-MM-DD（例：2026-05-15）
+    </div>
+    <div class="modal-acts" style="margin-top:1rem">
+      <button class="btn" onclick="downloadCsvTemplate()">⬇ 雛形DL</button>
+      <button class="btn" onclick="closeModal('csvModal')">キャンセル</button>
+      <button class="btn btn-accent" id="csvImportBtn" onclick="importCsv()" style="display:none">登録する</button>
+    </div>
   </div>
 </div>
 
@@ -1059,11 +1090,121 @@ function updateAdminUI(){
   document.getElementById('adminBtn').classList.toggle('active',isAdmin);
   document.getElementById('adminBtn').textContent = isAdmin ? '✕' : '✏️';
   document.getElementById('addBtn').style.display=isAdmin?'':'none';
+  document.getElementById('csvBtn').style.display=isAdmin?'':'none';
   render();
 }
 
 // ── Add/Edit ──
-// ── OGP fetch ──
+// ── CSV ──
+window.openCsvModal = () => {
+  document.getElementById('csvFile').value = '';
+  document.getElementById('csvPreviewWrap').style.display = 'none';
+  document.getElementById('csvImportBtn').style.display = 'none';
+  document.getElementById('csvErrors').textContent = '';
+  document.getElementById('csvModal').classList.add('open');
+};
+
+window.downloadCsvTemplate = () => {
+  const header = 'name,date,genre,price,note,img,url';
+  const sample = [
+    'ワンピース DXF Vol.5,2026-06-15,figure,3300円,全5種,https://example.com/img.jpg,https://example.com',
+    'たまごっち ぷくっとガチャ,,gacha,200円,2026年7月発売予定,,',
+    'サンリオ 食玩,,shokugan,,,,'
+  ].join('\n');
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + header + '\n' + sample], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'candytoys_template.csv'; a.click();
+};
+
+window.previewCsv = () => {
+  const file = document.getElementById('csvFile').files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result.replace(/^\uFEFF/, ''); // BOM除去
+    const rows = parseCsv(text);
+    if(rows.length < 2) return;
+    const headers = rows[0].map(h => h.trim().toLowerCase());
+    const dataRows = rows.slice(1).filter(r => r.some(c => c.trim()));
+
+    // バリデーション
+    const errors = [];
+    const validGenres = ['shokugan','gacha','figure','ichiban','collection'];
+    const previews = dataRows.map((row, i) => {
+      const name  = row[0]||'';
+      const date  = row[1]||'';
+      const genre = row[2]||'';
+      const price = row[3]||'';
+      const note  = row[4]||'';
+      const img   = row[5]||'';
+      const url   = row[6]||'';
+      const rowErrors = [];
+      if(!name.trim()) rowErrors.push('商品名が空');
+      if(!validGenres.includes(genre.trim())) rowErrors.push(`ジャンル不明「${genre}」`);
+      if(date.trim() && !/^\d{4}-\d{2}-\d{2}$/.test(date.trim())) rowErrors.push('日付形式エラー');
+      if(rowErrors.length) errors.push(`行${i+2}: ${rowErrors.join('、')}`);
+      const ok = rowErrors.length === 0;
+      return { name, date, genre: genre.trim(), price, note, img, url, ok };
+    });
+
+    window._csvRows = previews;
+    document.getElementById('csvCount').textContent = previews.length;
+    document.getElementById('csvPreview').innerHTML = previews.map((r,i) => `
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--border);${!r.ok?'background:#fff0f0':''}">
+        <span style="font-size:14px">${r.ok ? '✅' : '⚠️'}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name||'（名前なし）'}</div>
+          <div style="color:var(--text2)">${r.date||'日付なし'} · ${r.genre} ${r.price?'· '+r.price:''}</div>
+        </div>
+      </div>`).join('');
+    document.getElementById('csvErrors').textContent = errors.length ? '⚠️ ' + errors.join('　') : '';
+    document.getElementById('csvPreviewWrap').style.display = '';
+    document.getElementById('csvImportBtn').style.display = previews.some(r=>r.ok) ? '' : 'none';
+  };
+  reader.readAsText(file, 'UTF-8');
+};
+
+function parseCsv(text) {
+  const rows = []; let row = []; let cell = ''; let inQuote = false;
+  for(let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if(inQuote) {
+      if(c==='"' && text[i+1]==='"') { cell+='"'; i++; }
+      else if(c==='"') inQuote=false;
+      else cell+=c;
+    } else {
+      if(c==='"') inQuote=true;
+      else if(c===',') { row.push(cell); cell=''; }
+      else if(c==='\n'||c==='\r') {
+        if(c==='\r' && text[i+1]==='\n') i++;
+        row.push(cell); rows.push(row); row=[]; cell='';
+      } else cell+=c;
+    }
+  }
+  if(cell||row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+
+window.importCsv = async () => {
+  const rows = (window._csvRows||[]).filter(r=>r.ok);
+  if(!rows.length) return;
+  const btn = document.getElementById('csvImportBtn');
+  btn.textContent = '登録中...'; btn.disabled = true;
+  let count = 0;
+  for(const r of rows) {
+    const data = {
+      name: r.name, genre: r.genre, price: r.price, note: r.note, img: r.img, url: r.url,
+      dateType: r.date ? 'exact' : 'month',
+      date: r.date||'', dateMonth: '', datePeriodMonth: '', datePeriodSub: '',
+      adminKey: ADMIN_PASSWORD, updatedAt: Date.now()
+    };
+    await push(itemsRef, data).catch(()=>{});
+    count++;
+  }
+  closeModal('csvModal');
+  showToast(`✅ ${count}件を登録しました！`);
+  btn.textContent = '登録する'; btn.disabled = false;
+};
 window.fetchOgp = async () => {
   const url = document.getElementById('fOgpUrl').value.trim();
   if (!url) return;
