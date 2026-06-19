@@ -721,7 +721,7 @@ body {
       <strong style="color:var(--text)">CSVフォーマット</strong><br>
       列順：名前, 発売日, ジャンル, 値段, メモ, 画像URL, 商品URL<br>
       ジャンル：shokugan / gacha / figure / ichiban / collection<br>
-      発売日：YYYY-MM-DD（例：2026-05-15）
+      発売日：YYYY-MM-DD（例：2026-05-15）※ YYYY/MM/DD も自動変換されます
     </div>
     <div class="modal-acts" style="margin-top:1rem">
       <button class="btn" onclick="downloadCsvTemplate()">⬇ 雛形DL</button>
@@ -1167,6 +1167,20 @@ window.downloadCsvTemplate = () => {
   a.download = 'candytoys_template.csv'; a.click();
 };
 
+function normalizeDate(raw) {
+  const s = (raw||'').trim();
+  if (!s) return '';
+  // すでにYYYY-MM-DD形式ならそのまま
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // YYYY/MM/DD, YYYY.MM.DD, YYYY年MM月DD日 などに対応（0埋めなしもOK）
+  const m = s.match(/^(\d{4})[\/\.年](\d{1,2})[\/\.月](\d{1,2})日?$/);
+  if (m) {
+    const [,y,mo,d] = m;
+    return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+  return ''; // 認識できない形式
+}
+
 window.previewCsv = () => {
   const file = document.getElementById('csvFile').files[0]; if(!file) return;
   const reader = new FileReader();
@@ -1182,16 +1196,17 @@ window.previewCsv = () => {
     const validGenres = ['shokugan','gacha','figure','ichiban','collection'];
     const previews = dataRows.map((row, i) => {
       const name  = row[0]||'';
-      const date  = row[1]||'';
+      const rawDate = row[1]||'';
       const genre = row[2]||'';
       const price = row[3]||'';
       const note  = row[4]||'';
       const img   = row[5]||'';
       const url   = row[6]||'';
+      const date  = normalizeDate(rawDate);
       const rowErrors = [];
       if(!name.trim()) rowErrors.push('商品名が空');
       if(!validGenres.includes(genre.trim())) rowErrors.push(`ジャンル不明「${genre}」`);
-      if(date.trim() && !/^\d{4}-\d{2}-\d{2}$/.test(date.trim())) rowErrors.push('日付形式エラー');
+      if(rawDate.trim() && !date) rowErrors.push(`日付形式エラー「${rawDate}」`);
       if(rowErrors.length) errors.push(`行${i+2}: ${rowErrors.join('、')}`);
       const ok = rowErrors.length === 0;
       return { name, date, genre: genre.trim(), price, note, img, url, ok };
