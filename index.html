@@ -104,9 +104,7 @@ body {
   background: var(--accent); color: white; border-color: transparent;
 }
 .btn-accent:hover { background: #d0511e; }
-#showAllBtn.on { background: var(--accent); color: white; border-color: transparent; }
-#showAllBtn:disabled { cursor: default; opacity: 1; }
-#pastBtn.on { background: var(--accent); color: white; border-color: transparent; }
+
 .btn-sm { padding: 5px 11px; font-size: 12px; }
 .btn-ghost { border-color: transparent; background: transparent; }
 .btn-ghost:hover { background: var(--bg2); }
@@ -150,6 +148,7 @@ body {
   color: var(--text2); transition: all 0.15s; font-family: inherit; text-align: center;
 }
 .vtab.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+#periodTabs .vtab.on { background: var(--accent); color: white; }
 
 /* Fav button in detail */
 .fav-btn {
@@ -534,19 +533,28 @@ body {
 
   <!-- Nav -->
   <div class="nav-row">
-    <div class="nav-arrow" onclick="prevMonth()">‹</div>
-    <div style="flex:1;text-align:center">
-      <div class="month-title" id="monthTitle"></div>
+    <!-- カレンダー専用：月送り -->
+    <div id="calNav" style="display:none;align-items:center;gap:10px;flex:1">
+      <div class="nav-arrow" onclick="prevMonth()">‹</div>
+      <div style="flex:1;text-align:center">
+        <div class="month-title" id="monthTitle"></div>
+      </div>
+      <div class="nav-arrow" onclick="nextMonth()">›</div>
     </div>
-    <div class="nav-arrow" onclick="nextMonth()">›</div>
-    <button class="btn btn-sm" id="showAllBtn" onclick="toggleShowAll()">直近発売</button>
-    <button class="btn btn-sm" id="pastBtn" onclick="togglePast()" style="display:none">過去も表示</button>
+    <!-- カード/リスト専用：直近・過去タブ -->
+    <div id="periodTabs" class="view-tabs" style="display:none;flex:1">
+      <button class="vtab on" id="recentTab" onclick="setPeriod(false)">直近発売</button>
+      <button class="vtab" id="pastTab" onclick="setPeriod(true)">過去も表示</button>
+    </div>
     <div class="view-tabs">
       <button class="vtab" id="vCal"  onclick="setView('cal')">📅</button>
       <button class="vtab on" id="vCard" onclick="setView('card')">🖼</button>
       <button class="vtab" id="vList" onclick="setView('list')">📋</button>
     </div>
   </div>
+
+  <!-- カード/リスト時のタイトル -->
+  <div id="periodTitle" style="text-align:center;margin-bottom:0.5rem;font-family:'Poppins',sans-serif;font-size:18px;font-weight:700;letter-spacing:-0.4px"></div>
 
   <!-- Stats -->
   <div class="stats-row" id="statsRow"></div>
@@ -772,7 +780,7 @@ let year  = new Date().getFullYear();
 let month = new Date().getMonth();
 let activeGenres = new Set(['shokugan','gacha','figure','ichiban']);
 let currentView  = 'card';
-let showAllMode  = true;
+let showAllMode  = true;  // カード/リストは常にtrue運用、カレンダーはfalse運用
 let includePast  = false;
 let isAdmin      = false;
 let editKey      = null;
@@ -849,20 +857,24 @@ function updatePills() {
 // ── View ──
 window.setView = v => {
   currentView = v;
-  if (v === 'cal' && showAllMode) showAllMode = false; // カレンダーは月単位必須
   ['cal','card','list'].forEach(n => {
     document.getElementById('view'+n.charAt(0).toUpperCase()+n.slice(1)).style.display = n===v ? '' : 'none';
     document.getElementById('v'+n.charAt(0).toUpperCase()+n.slice(1)).classList.toggle('on', n===v);
   });
+  if (v === 'cal') {
+    showAllMode = false; // カレンダーは月単位
+  } else {
+    showAllMode = true; // カード/リストは常に直近・過去切替方式
+  }
   render();
 };
 
-window.jumpToMonth = (y, m) => { showAllMode=false; includePast=false; year=y; month=m; render(); };
+window.jumpToMonth = (y, m) => { year=y; month=m; setView('cal'); };
 
-window.prevMonth = () => { showAllMode=false; includePast=false; if(--month<0){month=11;year--;} render(); };
-window.nextMonth = () => { showAllMode=false; includePast=false; if(++month>11){month=0;year++;} render(); };
-window.toggleShowAll = () => { if(showAllMode) return; showAllMode = true; render(); };
-window.togglePast = () => { includePast = !includePast; render(); };
+window.prevMonth = () => { if(--month<0){month=11;year--;} render(); };
+window.nextMonth = () => { if(++month>11){month=0;year++;} render(); };
+
+window.setPeriod = (past) => { includePast = past; render(); };
 
 // ── Date helpers ──
 function formatDateLabel(v) {
@@ -927,17 +939,19 @@ function thisMonth() {
 
 function render() {
   const mN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-  document.getElementById('monthTitle').textContent = showAllMode ? (includePast ? 'すべての登録商品' : '直近の発売情報') : `${year}年 ${mN[month]}`;
+  const isCal = currentView === 'cal';
 
-  const showAllBtn = document.getElementById('showAllBtn');
-  showAllBtn.classList.toggle('on', showAllMode);
-  showAllBtn.disabled = showAllMode;
-  showAllBtn.style.display = currentView === 'cal' ? 'none' : '';
+  document.getElementById('calNav').style.display = isCal ? 'flex' : 'none';
+  document.getElementById('periodTabs').style.display = isCal ? 'none' : 'flex';
+  document.getElementById('periodTitle').style.display = isCal ? 'none' : '';
 
-  const pastBtn = document.getElementById('pastBtn');
-  pastBtn.textContent = includePast ? '直近のみ表示' : '過去も表示';
-  pastBtn.classList.toggle('on', includePast);
-  pastBtn.style.display = (showAllMode && currentView !== 'cal') ? '' : 'none';
+  if (isCal) {
+    document.getElementById('monthTitle').textContent = `${year}年 ${mN[month]}`;
+  } else {
+    document.getElementById('periodTitle').textContent = includePast ? 'すべての登録商品' : '直近の発売情報';
+    document.getElementById('recentTab').classList.toggle('on', !includePast);
+    document.getElementById('pastTab').classList.toggle('on', includePast);
+  }
 
   renderTimeline();
   renderStats();
