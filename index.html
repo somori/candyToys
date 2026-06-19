@@ -571,7 +571,7 @@ body {
   </div>
 
   <!-- Timeline bar -->
-  <div class="timeline-wrap" style="margin-top:1.5rem">
+  <div class="timeline-wrap" id="timelineWrap" style="margin-top:1.5rem">
     <div class="timeline-bar" id="timelineBar"></div>
   </div>
 
@@ -947,7 +947,8 @@ function render() {
     document.getElementById('pastTab').classList.toggle('on', includePast);
   }
 
-  renderTimeline();
+  document.getElementById('timelineWrap').style.display = isCal ? '' : 'none';
+  if (isCal) renderTimeline();
   renderStats();
   if (currentView==='cal')  renderCal();
   if (currentView==='card') renderCard();
