@@ -105,6 +105,7 @@ body {
 }
 .btn-accent:hover { background: #d0511e; }
 #showAllBtn.on { background: var(--accent); color: white; border-color: transparent; }
+#pastBtn.on { background: var(--bg3); color: var(--text); }
 .btn-sm { padding: 5px 11px; font-size: 12px; }
 .btn-ghost { border-color: transparent; background: transparent; }
 .btn-ghost:hover { background: var(--bg2); }
@@ -538,6 +539,7 @@ body {
     </div>
     <div class="nav-arrow" onclick="nextMonth()">›</div>
     <button class="btn btn-sm" id="showAllBtn" onclick="toggleShowAll()">全件表示</button>
+    <button class="btn btn-sm" id="pastBtn" onclick="togglePast()" style="display:none">過去も表示</button>
     <div class="view-tabs">
       <button class="vtab" id="vCal"  onclick="setView('cal')">📅</button>
       <button class="vtab on" id="vCard" onclick="setView('card')">🖼</button>
@@ -770,6 +772,7 @@ let month = new Date().getMonth();
 let activeGenres = new Set(['shokugan','gacha','figure','ichiban']);
 let currentView  = 'card';
 let showAllMode  = true;
+let includePast  = false;
 let isAdmin      = false;
 let editKey      = null;
 let selGenreVal  = 'shokugan';
@@ -858,6 +861,7 @@ window.jumpToMonth = (y, m) => { showAllMode=false; year=y; month=m; render(); }
 window.prevMonth = () => { showAllMode=false; if(--month<0){month=11;year--;} render(); };
 window.nextMonth = () => { showAllMode=false; if(++month>11){month=0;year++;} render(); };
 window.toggleShowAll = () => { showAllMode = !showAllMode; render(); };
+window.togglePast = () => { includePast = !includePast; render(); };
 
 // ── Date helpers ──
 function formatDateLabel(v) {
@@ -887,8 +891,28 @@ function filtered() {
     .filter(([k,v]) => activeGenres.has(v.genre) && (!favMode || favs.has(k)))
     .sort(([,a],[,b]) => sortKey(a).localeCompare(sortKey(b)));
 }
+function getItemDateForCompare(v) {
+  // 比較用にYYYY-MM-DD相当の文字列を返す（曖昧な日付は月初/週初扱い）
+  const type = v.dateType||'exact';
+  if(type==='exact') return v.date||'';
+  if(type==='month') return v.dateMonth ? v.dateMonth+'-01' : '';
+  if(type==='period') return v.datePeriodMonth ? v.datePeriodMonth+'-01' : '';
+  return '';
+}
+
 function thisMonth() {
-  if (showAllMode) return filtered();
+  if (showAllMode) {
+    let list = filtered();
+    if (!includePast) {
+      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 14);
+      const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+      list = list.filter(([,v]) => {
+        const d = getItemDateForCompare(v);
+        return !d || d >= cutoffStr; // 日付不明のものは常に表示
+      });
+    }
+    return list;
+  }
   return filtered().filter(([,v]) => {
     const type = v.dateType||'exact';
     let ym;
@@ -905,6 +929,8 @@ function render() {
   document.getElementById('monthTitle').textContent = showAllMode ? 'すべての登録商品' : `${year}年 ${mN[month]}`;
   document.getElementById('showAllBtn').classList.toggle('on', showAllMode);
   document.getElementById('showAllBtn').style.display = currentView === 'cal' ? 'none' : '';
+  document.getElementById('pastBtn').style.display = (showAllMode && currentView !== 'cal') ? '' : 'none';
+  document.getElementById('pastBtn').classList.toggle('on', includePast);
   renderTimeline();
   renderStats();
   if (currentView==='cal')  renderCal();
