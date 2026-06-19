@@ -547,9 +547,8 @@ body {
       <button class="vtab" id="pastTab" onclick="setPeriod(true)">過去も表示</button>
     </div>
     <div class="view-tabs">
-      <button class="vtab" id="vCal"  onclick="setView('cal')">📅</button>
       <button class="vtab on" id="vCard" onclick="setView('card')">🖼</button>
-      <button class="vtab" id="vList" onclick="setView('list')">📋</button>
+      <button class="vtab" id="vCal"  onclick="setView('cal')">📅</button>
     </div>
   </div>
 
@@ -569,11 +568,6 @@ body {
   <!-- Card view -->
   <div id="viewCard">
     <div class="card-grid" id="cardGrid"></div>
-  </div>
-
-  <!-- List view -->
-  <div id="viewList" style="display:none">
-    <div class="list-view" id="listView"></div>
   </div>
 
   <!-- Timeline bar -->
@@ -857,14 +851,14 @@ function updatePills() {
 // ── View ──
 window.setView = v => {
   currentView = v;
-  ['cal','card','list'].forEach(n => {
+  ['cal','card'].forEach(n => {
     document.getElementById('view'+n.charAt(0).toUpperCase()+n.slice(1)).style.display = n===v ? '' : 'none';
     document.getElementById('v'+n.charAt(0).toUpperCase()+n.slice(1)).classList.toggle('on', n===v);
   });
   if (v === 'cal') {
     showAllMode = false; // カレンダーは月単位
   } else {
-    showAllMode = true; // カード/リストは常に直近・過去切替方式
+    showAllMode = true; // カードは常に直近・過去切替方式
   }
   render();
 };
@@ -957,7 +951,6 @@ function render() {
   renderStats();
   if (currentView==='cal')  renderCal();
   if (currentView==='card') renderCard();
-  if (currentView==='list') renderList();
 }
 
 function renderTimeline() {
