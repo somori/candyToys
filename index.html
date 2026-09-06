@@ -204,6 +204,16 @@ body {
   font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 700;
   letter-spacing: -0.5px;
 }
+/* Month divider in card view */
+.month-divider {
+  font-size: 13px; font-weight: 700; color: var(--text2);
+  padding: 6px 0 10px;
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 8px;
+}
+.month-divider::before { content: ''; flex: 0 0 3px; height: 16px; background: var(--accent); border-radius: 99px; }
+.month-divider::after  { content: ''; flex: 1; height: 1px; background: var(--border); }
+
 /* Vague items list (calendar view) */
 .vague-section-title {
   font-size: 12px; font-weight: 700; color: var(--text3);
@@ -612,7 +622,7 @@ body {
     </div>
     <!-- カード/リスト専用：直近・過去タブ -->
     <div id="periodTabs" class="view-tabs" style="display:none;flex:1">
-      <button class="vtab on" id="recentTab" onclick="setPeriod(false)">直近発売</button>
+      <button class="vtab on" id="recentTab" onclick="setPeriod(false)">今後発売予定</button>
       <button class="vtab" id="pastTab" onclick="setPeriod(true)">過去も表示</button>
     </div>
     <div class="view-tabs">
@@ -1042,7 +1052,7 @@ function render() {
   if (isCal) {
     document.getElementById('monthTitle').textContent = `${year}年 ${mN[month]}`;
   } else {
-    document.getElementById('periodTitle').textContent = includePast ? 'すべての登録商品' : '直近の発売情報';
+    document.getElementById('periodTitle').textContent = includePast ? 'すべての登録商品' : '今後の発売予定';
     document.getElementById('recentTab').classList.toggle('on', !includePast);
     document.getElementById('pastTab').classList.toggle('on', includePast);
   }
@@ -1196,30 +1206,61 @@ function imgTag(v, cls, phCls) {
 
 function renderCard() {
   const tm = thisMonth();
-  if(!tm.length){ document.getElementById('cardGrid').innerHTML='<div class="empty" style="grid-column:1/-1">この月の登録アイテムはありません</div>'; return; }
-  document.getElementById('cardGrid').innerHTML = tm.map(([k,v])=>{
-    const dl = formatDateLabel(v);
-    const isVague = (v.dateType||'exact') !== 'exact';
-    const faved = isFav(k);
-    const imgInner = v.img
-      ? `<img src="${v.img}" class="card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div class="card-img-placeholder" style="display:none">${GE[v.genre]}</div>`
-      : `<div class="card-img-placeholder">${GE[v.genre]}</div>`;
-    return `<div class="item-card" onclick="openDetail('${k}')">
-      <div class="card-img-wrap">
-        ${imgInner}
-        <div class="card-date-overlay">
-          <div class="card-date-day">${dl.day}</div>
-          <div class="card-date-label">${dl.label}</div>
-        </div>
-        ${faved?`<div style="position:absolute;top:6px;right:6px;font-size:18px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3));cursor:pointer;" onclick="event.stopPropagation();clickFav('${k}')">⭐</div>`:''}
+  if(!tm.length){ document.getElementById('cardGrid').innerHTML='<div class="empty" style="grid-column:1/-1">登録アイテムはありません</div>'; return; }
+
+  // 全件表示モードの時は月ごとにグループ化
+  if (showAllMode) {
+    const mN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    const groups = {}; // key: "YYYY-MM" or "9999-99" for unknown
+    const groupOrder = [];
+    tm.forEach(([k,v]) => {
+      const type = v.dateType||'exact';
+      let ym;
+      if(type==='exact') ym = (v.date||'').slice(0,7);
+      else if(type==='month') ym = v.dateMonth||'9999-99';
+      else ym = v.datePeriodMonth||'9999-99';
+      if(!ym) ym = '9999-99';
+      if(!groups[ym]) { groups[ym]=[]; groupOrder.push(ym); }
+      groups[ym].push([k,v]);
+    });
+
+    const html = groupOrder.map(ym => {
+      const [y,m] = ym.split('-');
+      const label = ym==='9999-99' ? '日付未定' : `${y}年 ${mN[parseInt(m)-1]}`;
+      const cards = groups[ym].map(([k,v]) => cardHtml(k,v)).join('');
+      return `<div style="grid-column:1/-1">
+        <div class="month-divider">${label}</div>
       </div>
-      <div class="card-body">
-        <div class="card-name">${v.name}</div>
-        ${v.price?`<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">💴 ${v.price}</div>`:''}
-        <span class="card-badge" style="${GB[v.genre]}">${GL[v.genre]}</span>${isVague?`<span class="card-vague-badge">目安</span>`:''}
+      ${cards}`;
+    }).join('');
+    document.getElementById('cardGrid').innerHTML = html;
+  } else {
+    document.getElementById('cardGrid').innerHTML = tm.map(([k,v]) => cardHtml(k,v)).join('');
+  }
+}
+
+function cardHtml(k, v) {
+  const dl = formatDateLabel(v);
+  const isVague = (v.dateType||'exact') !== 'exact';
+  const faved = isFav(k);
+  const imgInner = v.img
+    ? `<img src="${v.img}" class="card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div class="card-img-placeholder" style="display:none">${GE[v.genre]}</div>`
+    : `<div class="card-img-placeholder">${GE[v.genre]}</div>`;
+  return `<div class="item-card" onclick="openDetail('${k}')">
+    <div class="card-img-wrap">
+      ${imgInner}
+      <div class="card-date-overlay">
+        <div class="card-date-day">${dl.day}</div>
+        <div class="card-date-label">${dl.label}</div>
       </div>
-    </div>`;
-  }).join('');
+      ${faved?`<div style="position:absolute;top:6px;right:6px;font-size:18px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3));cursor:pointer;" onclick="event.stopPropagation();clickFav('${k}')">⭐</div>`:''}
+    </div>
+    <div class="card-body">
+      <div class="card-name">${v.name}</div>
+      ${v.price?`<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">💴 ${v.price}</div>`:''}
+      <span class="card-badge" style="${GB[v.genre]}">${GL[v.genre]}</span>${isVague?`<span class="card-vague-badge">目安</span>`:''}
+    </div>
+  </div>`;
 }
 
 function renderList() {
@@ -1450,6 +1491,9 @@ window.fetchOgp = async () => {
     if (ogp.image) { document.getElementById('fImg').value = ogp.image; previewImg(); }
     if (ogp.description && !document.getElementById('fNote').value) {
       document.getElementById('fNote').value = ogp.description.slice(0, 80);
+    }
+    if (ogp.price && !document.getElementById('fPrice').value) {
+      document.getElementById('fPrice').value = ogp.price;
     }
     document.getElementById('fUrl').value = ogp.url || url;
 
