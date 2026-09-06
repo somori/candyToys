@@ -53,6 +53,8 @@
   --ichiban-dark: #6a0040;
   --collection: #b5e8c8;
   --collection-dark: #1a5c3a;
+  --prize: #d4b8f0;
+  --prize-dark: #4a1a7a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -152,6 +154,7 @@ body {
 .gtab-figure.on   { background: var(--figure);   color: var(--figure-dark); }
 .gtab-ichiban.on  { background: var(--ichiban);     color: var(--ichiban-dark); }
 .gtab-collection.on { background: var(--collection); color: var(--collection-dark); }
+.gtab-prize.on      { background: var(--prize);      color: var(--prize-dark); }
 .gtab-fav.on      { background: #f5d020;             color: #5a3c00; }
 
 /* View tabs */
@@ -319,6 +322,7 @@ body {
 .chip-figure   { background: var(--figure);   color: var(--figure-dark); }
 .chip-ichiban    { background: var(--ichiban);    color: var(--ichiban-dark); }
 .chip-collection { background: var(--collection); color: var(--collection-dark); }
+.chip-prize      { background: var(--prize);      color: var(--prize-dark); }
 .chip-more { font-size: 10px; color: var(--text3); padding-left: 3px; font-weight: 500; }
 
 /* ── Card Grid (image view) ── */
@@ -465,6 +469,7 @@ body {
 .go-figure   { background: var(--figure);   color: var(--figure-dark);   border-color: #4a9ae0; }
 .go-ichiban    { background: var(--ichiban);    color: var(--ichiban-dark);    border-color: #d070a8; }
 .go-collection { background: var(--collection); color: var(--collection-dark); border-color: #4aaa78; }
+.go-prize      { background: var(--prize);      color: var(--prize-dark);      border-color: #9a6ad0; }
 .img-preview {
   width: 100%; max-height: 120px; object-fit: cover; border-radius: var(--radius);
   margin-top: 6px; display: none; border: 1px solid var(--border);
@@ -607,6 +612,7 @@ body {
     <button class="gtab gtab-figure"   data-g="figure"   onclick="toggleGenre('figure')">🗿 フィギュア</button>
     <button class="gtab gtab-ichiban"    data-g="ichiban"    onclick="toggleGenre('ichiban')">🎀 一番くじ</button>
     <button class="gtab gtab-collection" data-g="collection" onclick="toggleGenre('collection')">🧸 コレクショントイ</button>
+    <button class="gtab gtab-prize"      data-g="prize"      onclick="toggleGenre('prize')">🎮 プライズ</button>
     <button class="gtab gtab-fav"        data-g="fav"        onclick="toggleFav()">⭐ ほしい！</button>
   </div>
 
@@ -722,6 +728,7 @@ body {
         <button class="go go-figure"      data-g="figure"     onclick="selGenre('figure')">🗿 フィギュア</button>
         <button class="go go-ichiban"     data-g="ichiban"    onclick="selGenre('ichiban')">🎀 一番くじ</button>
         <button class="go go-collection"  data-g="collection" onclick="selGenre('collection')" style="grid-column:1/-1">🧸 コレクショントイ</button>
+        <button class="go go-prize"       data-g="prize"      onclick="selGenre('prize')"      style="grid-column:1/-1">🎮 プライズ</button>
       </div>
     </div>
 
@@ -875,14 +882,15 @@ let editKey      = null;
 let selGenreVal  = 'shokugan';
 
 // ── Helpers ──
-const GL = { shokugan:'食玩', gacha:'ガチャ', figure:'フィギュア', ichiban:'一番くじ', collection:'コレクショントイ' };
-const GE = { shokugan:'🍬', gacha:'🎰', figure:'🗿', ichiban:'🎀', collection:'🧸' };
-const GC = { shokugan:'chip-shokugan', gacha:'chip-gacha', figure:'chip-figure', ichiban:'chip-ichiban', collection:'chip-collection' };
+const GL = { shokugan:'食玩', gacha:'ガチャ', figure:'フィギュア', ichiban:'一番くじ', collection:'コレクショントイ', prize:'プライズ' };
+const GE = { shokugan:'🍬', gacha:'🎰', figure:'🗿', ichiban:'🎀', collection:'🧸', prize:'🎮' };
+const GC = { shokugan:'chip-shokugan', gacha:'chip-gacha', figure:'chip-figure', ichiban:'chip-ichiban', collection:'chip-collection', prize:'chip-prize' };
 const GB = { shokugan:`background:var(--shokugan);color:var(--shokugan-dark)`,
              gacha:   `background:var(--gacha);color:var(--gacha-dark)`,
              figure:  `background:var(--figure);color:var(--figure-dark)`,
              ichiban: `background:var(--ichiban);color:var(--ichiban-dark)`,
-             collection:`background:var(--collection);color:var(--collection-dark)` };
+             collection:`background:var(--collection);color:var(--collection-dark)`,
+             prize:   `background:var(--prize);color:var(--prize-dark)` };
 
 // ── Firebase realtime listener ──
 onValue(itemsRef, snap => {
@@ -893,7 +901,7 @@ onValue(itemsRef, snap => {
 });
 
 // ── Genre toggle ──
-const ALL_GENRES = ['shokugan','gacha','figure','ichiban','collection'];
+const ALL_GENRES = ['shokugan','gacha','figure','ichiban','collection','prize'];
 
 // ── Favorites ──
 const FAV_KEY = 'candytoys_favs';
@@ -1077,7 +1085,7 @@ function renderTimeline() {
     else if(type==='month') ym = v.dateMonth||'';
     else ym = v.datePeriodMonth||'';
     if(!ym) return;
-    if(!monthCounts[ym]) monthCounts[ym] = {shokugan:0,gacha:0,figure:0,ichiban:0,collection:0,total:0};
+    if(!monthCounts[ym]) monthCounts[ym] = {shokugan:0,gacha:0,figure:0,ichiban:0,collection:0,prize:0,total:0};
     monthCounts[ym][v.genre] = (monthCounts[ym][v.genre]||0) + 1;
     monthCounts[ym].total++;
   });
@@ -1092,7 +1100,7 @@ function renderTimeline() {
   }
 
   const mShort = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-  const dotColors = { shokugan:'var(--shokugan)', gacha:'var(--gacha)', figure:'var(--figure)', ichiban:'var(--ichiban)', collection:'var(--collection)' };
+  const dotColors = { shokugan:'var(--shokugan)', gacha:'var(--gacha)', figure:'var(--figure)', ichiban:'var(--ichiban)', collection:'var(--collection)', prize:'var(--prize)' };
 
   const bar = document.getElementById('timelineBar');
   bar.innerHTML = months.map(({year:y2, month:m2, ym}) => {
@@ -1123,7 +1131,7 @@ function renderTimeline() {
 
 function renderStats() {
   const tm = thisMonth();
-  const cnt = {shokugan:0,gacha:0,figure:0,ichiban:0,collection:0};
+  const cnt = {shokugan:0,gacha:0,figure:0,ichiban:0,collection:0,prize:0};
   tm.forEach(([,v])=>{ if(cnt[v.genre]!==undefined) cnt[v.genre]++; });
   const parts = [`全${tm.length}件`];
   if(cnt.shokugan)    parts.push(`🍬 食玩 ${cnt.shokugan}`);
@@ -1131,6 +1139,7 @@ function renderStats() {
   if(cnt.figure)      parts.push(`🗿 フィギュア ${cnt.figure}`);
   if(cnt.ichiban)     parts.push(`🎀 一番くじ ${cnt.ichiban}`);
   if(cnt.collection)  parts.push(`🧸 コレクショントイ ${cnt.collection}`);
+  if(cnt.prize)       parts.push(`🎮 プライズ ${cnt.prize}`);
   document.getElementById('statsRow').innerHTML =
     parts.map((p,i) => i===0 ? `<span>${p}</span>` : `<span class="stat-sep">|</span><span>${p}</span>`).join('');
 }
