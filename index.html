@@ -1380,51 +1380,38 @@ window.importCsv = async () => {
   showToast(`✅ ${count}件を登録しました！`);
   btn.textContent = '登録する'; btn.disabled = false;
 };
+// Cloudflare Worker URL（OGPプロキシ）
+const OGP_WORKER_URL = 'https://candytoys-ogp.somori.workers.dev';
+
 window.fetchOgp = async () => {
   const url = document.getElementById('fOgpUrl').value.trim();
   if (!url) return;
   const statusEl = document.getElementById('ogpStatus');
   const btn = document.getElementById('ogpFetchBtn');
   statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--text2)';
   statusEl.textContent = '取得中...';
   btn.disabled = true;
 
   try {
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const proxyUrl = `${OGP_WORKER_URL}?url=${encodeURIComponent(url)}`;
     const res = await fetch(proxyUrl);
-    const data = await res.json();
-    const html = data.contents;
+    const ogp = await res.json();
 
-    // OGPタグをパース
-    const getMeta = (prop) => {
-      const m = html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]+content=["']([^"']+)["']`, 'i'))
-               || html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${prop}["']`, 'i'));
-      return m ? m[1].trim() : '';
-    };
+    if (ogp.error) throw new Error(ogp.error);
+    if (!ogp.title && !ogp.image) throw new Error('情報が見つかりませんでした');
 
-    const title = getMeta('og:title') || getMeta('twitter:title') || '';
-    const image = getMeta('og:image') || getMeta('twitter:image') || '';
-    const desc  = getMeta('og:description') || getMeta('twitter:description') || '';
-
-    if (!title && !image) {
-      statusEl.textContent = '⚠️ 情報を取得できませんでした。手動で入力してください。';
-      statusEl.style.color = 'var(--accent)';
-    } else {
-      if (title) document.getElementById('fName').value = title;
-      if (image) {
-        document.getElementById('fImg').value = image;
-        previewImg();
-      }
-      if (desc && !document.getElementById('fNote').value) {
-        document.getElementById('fNote').value = desc.slice(0, 60);
-      }
-      // 商品URLもセット
-      document.getElementById('fUrl').value = url;
-      statusEl.textContent = '✅ 取得できました！内容を確認してください。';
-      statusEl.style.color = 'var(--gacha-dark)';
+    if (ogp.title) document.getElementById('fName').value = ogp.title;
+    if (ogp.image) { document.getElementById('fImg').value = ogp.image; previewImg(); }
+    if (ogp.description && !document.getElementById('fNote').value) {
+      document.getElementById('fNote').value = ogp.description.slice(0, 80);
     }
+    document.getElementById('fUrl').value = ogp.url || url;
+
+    statusEl.textContent = `✅ 取得できました！内容を確認してください。${ogp.siteName?'（'+ogp.siteName+'）':''}`;
+    statusEl.style.color = 'var(--gacha-dark)';
   } catch(e) {
-    statusEl.textContent = '⚠️ 取得に失敗しました。手動で入力してください。';
+    statusEl.textContent = `⚠️ ${e.message || '取得に失敗しました。手動で入力してください。'}`;
     statusEl.style.color = 'var(--accent)';
   }
   btn.disabled = false;
