@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
 <meta property="og:title" content="CandyToys - 食玩・ガチャ 発売カレンダー">
-<meta property="og:description" content="食玩・ガチャガチャ・フィギュア・一番くじの発売情報カレンダー">
+<meta property="og:description" content="食玩・ガチャガチャ・フィギュア・くじの発売情報カレンダー">
 <meta property="og:image" content="https://somori.github.io/candyToys/logo.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://somori.github.io/candyToys/">
@@ -619,7 +619,7 @@ body {
     <button class="gtab gtab-shokugan" data-g="shokugan" onclick="toggleGenre('shokugan')">🍬 食玩</button>
     <button class="gtab gtab-gacha"    data-g="gacha"    onclick="toggleGenre('gacha')">🎰 ガチャ</button>
     <button class="gtab gtab-figure"   data-g="figure"   onclick="toggleGenre('figure')">🗿 フィギュア</button>
-    <button class="gtab gtab-ichiban"    data-g="ichiban"    onclick="toggleGenre('ichiban')">🎀 一番くじ</button>
+    <button class="gtab gtab-ichiban"    data-g="ichiban"    onclick="toggleGenre('ichiban')">🎀 くじ</button>
     <button class="gtab gtab-collection" data-g="collection" onclick="toggleGenre('collection')">🧸 コレクショントイ</button>
     <button class="gtab gtab-prize"      data-g="prize"      onclick="toggleGenre('prize')">🎮 プライズ</button>
     <button class="gtab gtab-fav"        data-g="fav"        onclick="toggleFav()">⭐ ほしい！</button>
@@ -735,7 +735,7 @@ body {
         <button class="go go-shokugan on" data-g="shokugan"   onclick="selGenre('shokugan')">🍬 食玩</button>
         <button class="go go-gacha"       data-g="gacha"      onclick="selGenre('gacha')">🎰 ガチャ</button>
         <button class="go go-figure"      data-g="figure"     onclick="selGenre('figure')">🗿 フィギュア</button>
-        <button class="go go-ichiban"     data-g="ichiban"    onclick="selGenre('ichiban')">🎀 一番くじ</button>
+        <button class="go go-ichiban"     data-g="ichiban"    onclick="selGenre('ichiban')">🎀 くじ</button>
         <button class="go go-collection"  data-g="collection" onclick="selGenre('collection')" style="grid-column:1/-1">🧸 コレクショントイ</button>
         <button class="go go-prize"       data-g="prize"      onclick="selGenre('prize')"      style="grid-column:1/-1">🎮 プライズ</button>
       </div>
@@ -891,7 +891,7 @@ let editKey      = null;
 let selGenreVal  = 'shokugan';
 
 // ── Helpers ──
-const GL = { shokugan:'食玩', gacha:'ガチャ', figure:'フィギュア', ichiban:'一番くじ', collection:'コレクショントイ', prize:'プライズ' };
+const GL = { shokugan:'食玩', gacha:'ガチャ', figure:'フィギュア', ichiban:'くじ', collection:'コレクショントイ', prize:'プライズ' };
 const GE = { shokugan:'🍬', gacha:'🎰', figure:'🗿', ichiban:'🎀', collection:'🧸', prize:'🎮' };
 const GC = { shokugan:'chip-shokugan', gacha:'chip-gacha', figure:'chip-figure', ichiban:'chip-ichiban', collection:'chip-collection', prize:'chip-prize' };
 const GB = { shokugan:`background:var(--shokugan);color:var(--shokugan-dark)`,
@@ -1146,7 +1146,7 @@ function renderStats() {
   if(cnt.shokugan)    parts.push(`🍬 食玩 ${cnt.shokugan}`);
   if(cnt.gacha)       parts.push(`🎰 ガチャ ${cnt.gacha}`);
   if(cnt.figure)      parts.push(`🗿 フィギュア ${cnt.figure}`);
-  if(cnt.ichiban)     parts.push(`🎀 一番くじ ${cnt.ichiban}`);
+  if(cnt.ichiban)     parts.push(`🎀 くじ ${cnt.ichiban}`);
   if(cnt.collection)  parts.push(`🧸 コレクショントイ ${cnt.collection}`);
   if(cnt.prize)       parts.push(`🎮 プライズ ${cnt.prize}`);
   document.getElementById('statsRow').innerHTML =
@@ -1374,7 +1374,7 @@ window.downloadCsvTemplate = () => {
     'たまごっち ぷくっとガチャ,2026-07,gacha,200円,月のみ判明,,',
     'サンリオ 食玩,2026-08-上旬,shokugan,,旬のみ判明,,',
     'コレクショントイ サンプル,2026-09-2週,collection,,週のみ判明,,',
-    '一番くじ サンプル,,ichiban,880円/1回,日付未定,,'
+    'くじ サンプル,,ichiban,880円/1回,日付未定,,'
   ].join('\n');
   const bom = '\uFEFF';
   const blob = new Blob([bom + header + '\n' + sample], { type: 'text/csv;charset=utf-8' });
